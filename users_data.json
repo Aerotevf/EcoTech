@@ -1,0 +1,32 @@
+{
+    "_credentials_": {
+        "Aerotev": "Quadro02"
+    },
+    "Aerotev": {
+        "pontos_totais": 13,
+        "historico": [
+            {
+                "A\u00e7\u00e3o": "Transporte Sustent\u00e1vel (47 min, Finalidade: Trabalho)",
+                "Pontos": 4,
+                "Data/Hora": "23/11 17:23:38"
+            },
+            {
+                "A\u00e7\u00e3o": "Transporte Sustent\u00e1vel (55 min, Finalidade: Trabalho)",
+                "Pontos": 5,
+                "Data/Hora": "23/11 17:29:30"
+            },
+            {
+                "A\u00e7\u00e3o": "Transporte Sustent\u00e1vel (49 min, Finalidade: Trabalho)",
+                "Pontos": 4,
+                "Data/Hora": "23/11 17:40:50"
+            }
+        ],
+        "quiz_date": "2025-11-23",
+        "quiz_answered_today": false,
+        "nivel_anterior": "Semente",
+        "quiz_index": 3
+    },
+    "__credentials__": {
+        "Aerotev": "Quadro02"
+    }
+}
