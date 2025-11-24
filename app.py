@@ -1,9 +1,9 @@
-﻿import streamlit as st
-import datetime 
+import streamlit as st
+import datetime
 import json
 import os
-import pandas as pd 
-import random 
+import pandas as pd
+import random
 
 # --- CONFIGURAÇÃO DE ESTILO E CSS (FORÇAR TEMA CLARO) ---
 st.markdown("""
@@ -94,15 +94,15 @@ def exibir_logo_centralizado():
     """, unsafe_allow_html=True)
 
 # --- CONFIGURAÇÃO DE DADOS E VARIÁVEIS FIXAS ---
-DATA_FILE = "users_data.json" 
+DATA_FILE = "users_data.json"
 DEFAULT_USER_DATA = {
-    "pontos_totais": 0, 
-    "historico": [], 
-    "quiz_date": datetime.date.min.strftime('%Y-%m-%d'), 
-    "quiz_answered_today": False, 
+    "pontos_totais": 0,
+    "historico": [],
+    "quiz_date": datetime.date.min.strftime('%Y-%m-%d'),
+    "quiz_answered_today": False,
     "nivel_anterior": "Semente"
 }
-QUIZ_PONTOS = 25 
+QUIZ_PONTOS = 25
 
 # --- QUIZ: PERGUNTAS ---
 QUIZ_PERGUNTAS = [
@@ -116,8 +116,8 @@ QUIZ_PERGUNTAS = [
 # --- PONTOS DE COLETA (MOCK DATA ATUALIZADO COM ENDEREÇOS E HORÁRIOS) ---
 PONTOS_COLETA = pd.DataFrame({
     # Coordenadas mantidas para o st.map
-    'lat': [-23.5505, -23.545, -23.560], 
-    'lon': [-46.6333, -46.640, -46.625], 
+    'lat': [-23.5505, -23.545, -23.560],
+    'lon': [-46.6333, -46.640, -46.625],
     'nome': ['Eco Ponto Central', 'Recicla Fácil SP', 'Posto de Óleo'],
     'tipo': ['Eletrônicos/Pilhas', 'Plástico/Papel', 'Óleo de Cozinha'],
     
@@ -140,7 +140,7 @@ limites = {
 MAPA_EMBLEMAS_EMOJI = {
     "Semente": "🌱",
     "Broto": "🌿",
-    "Árvore Jovem": "🌳", 
+    "Árvore Jovem": "🌳",
     "EcoLíder": "👑"
 }
 
@@ -160,13 +160,13 @@ def carregar_todos_dados():
 
 def salvar_todos_dados(all_data):
     with open(DATA_FILE, "w") as f:
-        json.dump(all_data, f, indent=4) 
+        json.dump(all_data, f, indent=4)
 
 def carregar_dados_usuario(username):
     all_users_data = carregar_todos_dados()
     if username not in all_users_data:
         all_users_data[username] = DEFAULT_USER_DATA.copy()
-        salvar_todos_dados(all_users_data) 
+        salvar_todos_dados(all_users_data)
     return all_users_data[username]
 
 def salvar_dados_usuario(username, user_data):
@@ -209,22 +209,34 @@ def registrar_pontos_quiz(quiz_do_dia):
         "Data/Hora": datetime.datetime.now().strftime("%d/%m %H:%M:%S")
     }
     st.session_state.user_data["historico"].append(registro)
-    st.session_state.user_data["quiz_answered_today"] = True 
+    st.session_state.user_data["quiz_answered_today"] = True
     salvar_dados_usuario(st.session_state.username, st.session_state.user_data)
     st.success(f"🎉 Resposta Correta! Você ganhou {pontos_ganhos} pontos.")
 
 def gerar_quiz_diario():
+    # --- INÍCIO DA CORREÇÃO DE SEGURANÇA ---
+    # Busca a string de data. Se não existir, define uma string padrão antiga
     last_quiz_date_str = st.session_state.user_data.get("quiz_date", datetime.date.min.strftime('%Y-%m-%d'))
-    last_quiz_date = datetime.datetime.strptime(last_quiz_date_str, '%Y-%m-%d').date()
+    
+    try:
+        # Tenta converter a string para data
+        last_quiz_date = datetime.datetime.strptime(last_quiz_date_str, '%Y-%m-%d').date()
+    except (ValueError, TypeError):
+        # SE DER ERRO (como aconteceu no seu print), reseta para uma data antiga
+        # Isso impede que o app quebre
+        last_quiz_date = datetime.date.min
+    # --- FIM DA CORREÇÃO DE SEGURANÇA ---
+
     hoje = datetime.date.today()
     if hoje > last_quiz_date:
-        random.seed(hoje.day + hoje.month + hoje.year) 
+        random.seed(hoje.day + hoje.month + hoje.year)
         indice_quiz = random.choice(range(len(QUIZ_PERGUNTAS)))
         st.session_state.user_data["quiz_date"] = hoje.strftime('%Y-%m-%d')
         st.session_state.user_data["quiz_index"] = indice_quiz
-        st.session_state.user_data["quiz_answered_today"] = False 
+        st.session_state.user_data["quiz_answered_today"] = False
         salvar_dados_usuario(st.session_state.username, st.session_state.user_data)
-    return QUIZ_PERGUNTAS[st.session_state.user_data.get("quiz_index", 0)] 
+    
+    return QUIZ_PERGUNTAS[st.session_state.user_data.get("quiz_index", 0)]
 
 # --- AUTENTICAÇÃO E CADASTRO ---
 
