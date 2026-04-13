@@ -665,7 +665,7 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-                                   if st.button("✅ Confirmar trajeto"):
+        if st.button("✅ Confirmar trajeto"):
                     dados["pontos_totais"] += int(tempo * 0.5)
                     dados["total_trajetos"] += 1
                     salvar_dados(dados)
