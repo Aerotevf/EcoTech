@@ -395,6 +395,7 @@ if not st.session_state.logged_in:
         u = st.text_input("Usuário", placeholder="seu_usuario")
         p = st.text_input("Senha", type="password", placeholder="••••••••")
         if st.button("▶ INICIAR MISSÃO"):
+            if st.button("📝 CADASTRAR NOVO USUÁRIO"):
             try:
                 res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
                 if res.data:
@@ -417,7 +418,6 @@ if not st.session_state.logged_in:
                 st.error(f"Erro de conexão: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
-if st.button("📝 CADASTRAR NOVO USUÁRIO"):
     try:
         existente = supabase.table("usuarios").select("*").eq("username", u).execute()
 
