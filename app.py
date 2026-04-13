@@ -7,20 +7,20 @@ from supabase import create_client, Client
 # ─── CONFIGURAÇÃO DA PÁGINA ───────────────────────────────────────────────────
 st.set_page_config(page_title="EcoTech", page_icon="🌿", layout="wide")
 
-# CSS ESTABILIZADO (MÁXIMO CONTRASTE)
+# CSS REFORÇADO (CONTRASTE ALTO E CORES ECO-TECH)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;700&display=swap');
 
-/* Fundo Verde-Escuro Fixo (Sem JavaScript para não dar erro) */
+/* Fundo Eco-Tech: Verde Floresta para Azul Petróleo */
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #051a05 0%, #000000 100%) !important;
+    background: linear-gradient(180deg, #0a2412 0%, #020c1a 100%) !important;
     font-family: 'DM Sans', sans-serif !important;
 }
 
 /* Sidebar Estilo Terminal */
 [data-testid="stSidebar"] {
-    background-color: #000000 !important;
+    background-color: #051405 !important;
     border-right: 2px solid #39ff14;
 }
 
@@ -32,10 +32,10 @@ h1, h2, h3, p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
 /* Logo GIGANTE Neon Pixel */
 .logo-pixel-home {
     font-family: 'Press Start 2P', cursive !important;
-    font-size: 70px;
+    font-size: clamp(40px, 8vw, 70px);
     text-align: center;
     color: #39ff14 !important;
-    padding: 50px 0;
+    padding: 40px 0;
     text-shadow: 0 0 20px #39ff14, 4px 4px #000;
 }
 
@@ -44,18 +44,17 @@ h1, h2, h3, p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
     font-size: 30px;
     color: #39ff14 !important;
     text-align: center;
-    padding: 20px;
+    padding: 15px;
 }
 
 /* Botões Arcade */
 .stButton > button {
-    background-color: #001a00 !important;
+    background-color: #000 !important;
     color: #39ff14 !important;
     border: 3px solid #39ff14 !important;
     font-family: 'Press Start 2P', cursive !important;
     font-size: 12px !important;
-    width: 100%;
-    margin-bottom: 10px;
+    border-radius: 0px !important;
 }
 
 .stButton > button:hover {
@@ -65,10 +64,11 @@ h1, h2, h3, p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
 
 /* Cards de Informação */
 .card-pixel {
-    background: rgba(0, 30, 0, 0.8);
+    background: rgba(0, 0, 0, 0.7);
     border: 2px solid #39ff14;
     padding: 25px;
     border-radius: 10px;
+    margin-bottom: 20px;
 }
 
 /* Mensagem de Erro Vermelha */
@@ -76,7 +76,7 @@ h1, h2, h3, p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
     color: #ff4b4b !important;
     font-weight: bold;
     font-family: 'Press Start 2P', cursive;
-    font-size: 12px;
+    font-size: 10px;
     text-align: center;
 }
 </style>
@@ -100,30 +100,40 @@ if 'login_err' not in st.session_state: st.session_state.login_err = False
 if not st.session_state.logged_in:
     st.markdown('<p class="logo-pixel-home">ECOTECH</p>', unsafe_allow_html=True)
     
-    col1, col2 = st.columns([2, 1])
+    col1, col2 = st.columns([1.5, 1])
+    
     with col1:
         st.markdown("""
         <div class="card-pixel">
-        <h3 style="color:#39ff14 !important;">O QUE É O ECOTECH? 🌍</h3>
-        <p>Somos uma plataforma que usa tecnologia para monitorar seu impacto ambiental.</p>
-        <p><b>Missões:</b> Registre suas atividades de transporte sustentável e descarte de eletrônicos para ganhar XP e subir de nível!</p>
+            <h2 style="color:#39ff14 !important; font-family:'Press Start 2P'; font-size:18px;">SOBRE A MISSÃO 🌍</h2>
+            <p>O <b>EcoTech</b> é uma plataforma de tecnologia sustentável. Aqui, suas ações no mundo real viram progresso digital.</p>
+            <p><b>O que você pode fazer:</b></p>
+            <ul>
+                <li>🚲 <b>Mobilidade:</b> Ganhe XP ao usar transporte sem emissão.</li>
+                <li>📱 <b>Reciclagem:</b> Descarte eletrônicos e proteja o solo.</li>
+                <li>🧠 <b>Bio-Quiz:</b> Aprenda e evolua sua patente ambiental.</li>
+            </ul>
         </div>
         """, unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="card-pixel">', unsafe_allow_html=True)
-        st.subheader("PLAYER LOGIN")
+        st.subheader("ACESSO AO SISTEMA")
         u = st.text_input("USUÁRIO", key="user_in")
         p = st.text_input("SENHA", type="password", key="pass_in")
-        if st.button("START →"):
-            res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
-            if res.data:
-                st.session_state.logged_in = True
-                st.session_state.username = u
-                st.session_state.user_data = res.data[0]['dados_json']
-                st.rerun()
-            else:
-                st.session_state.login_err = True
+        
+        if st.button("START MISSION →"):
+            try:
+                res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
+                if res.data:
+                    st.session_state.logged_in = True
+                    st.session_state.username = u
+                    st.session_state.user_data = res.data[0]['dados_json']
+                    st.rerun()
+                else:
+                    st.session_state.login_err = True
+            except:
+                st.error("Erro de conexão.")
         
         if st.session_state.login_err:
             st.markdown('<p class="error-msg">DADOS INCORRETOS!</p>', unsafe_allow_html=True)
@@ -133,10 +143,10 @@ else:
     # ─── INTERFACE INTERNA ───
     with st.sidebar:
         st.markdown(f"### 👾 PLAYER: {st.session_state.username}")
-        pts = st.session_state.user_data['pontos_totais']
-        st.write(f"Nível: {obter_nivel(pts)} ({pts} XP)")
+        pts = st.session_state.user_data.get('pontos_totais', 0)
+        st.write(f"Patente: **{obter_nivel(pts)}**")
         st.divider()
-        menu = st.radio("SELECIONE A FASE:", ["PAINEL DE IMPACTO", "RANKING GLOBAL", "ONDE DESCARTAR"])
+        menu = st.radio("SISTEMA:", ["PAINEL DE IMPACTO", "RANKING GLOBAL", "ECO-RADAR"])
         if st.button("SAIR DO SISTEMA"):
             st.session_state.logged_in = False
             st.rerun()
@@ -144,13 +154,17 @@ else:
     st.markdown('<p class="logo-interno">ECOTECH</p>', unsafe_allow_html=True)
 
     if menu == "PAINEL DE IMPACTO":
-        st.subheader("Suas Estatísticas e Missões")
-        pts = st.session_state.user_data['pontos_totais']
+        st.markdown("""
+        <div style="background:rgba(57, 255, 20, 0.1); padding:10px; border-radius:10px; border-left: 5px solid #39ff14; margin-bottom:20px;">
+            <p style="margin:0; font-size:14px;"><b>INFO:</b> Este é seu centro de comando. Registre suas missões diárias para converter esforço em XP e redução de CO2.</p>
+        </div>
+        """, unsafe_allow_html=True)
         
+        pts = st.session_state.user_data.get('pontos_totais', 0)
         c1, c2, c3 = st.columns(3)
-        c1.metric("XP ATUAL", f"{pts} pts")
+        c1.metric("XP TOTAL", f"{pts} pts")
         c2.metric("CO2 EVITADO", f"{pts*0.1:.1f} kg")
-        c3.metric("PATENTE", obter_nivel(pts))
+        c3.metric("NÍVEL", obter_nivel(pts))
 
         st.markdown("---")
         st.subheader("🏃 MISSÕES DISPONÍVEIS")
@@ -158,31 +172,39 @@ else:
         col_a, col_b = st.columns(2)
         with col_a:
             with st.expander("🚲 TRANSPORTE SUSTENTÁVEL"):
-                st.write("Registre como você se locomoveu hoje:")
-                if st.button("Fui de Bike/A pé (+20 XP)"):
+                st.write("Cada trajeto limpo diminui sua pegada de carbono.")
+                if st.button("Bike/A pé (+20 XP)"):
                     st.session_state.user_data['pontos_totais'] += 20
                     supabase.table("usuarios").update({"dados_json": st.session_state.user_data}).eq("username", st.session_state.username).execute()
                     st.success("XP SALVO!")
                     st.rerun()
-                if st.button("Ônibus/Metrô (+10 XP)"):
+                if st.button("Bus/Metrô (+10 XP)"):
                     st.session_state.user_data['pontos_totais'] += 10
                     supabase.table("usuarios").update({"dados_json": st.session_state.user_data}).eq("username", st.session_state.username).execute()
                     st.rerun()
 
         with col_b:
-            with st.expander("🧠 DESAFIO QUIZ"):
-                st.write("Reciclar eletrônicos evita contaminação do solo?")
-                if st.button("SIM! (+20 XP)"):
+            with st.expander("🧠 QUIZ AMBIENTAL"):
+                st.write("Teste seu conhecimento para bônus intelectuais.")
+                if st.button("Responder Quiz (+20 XP)"):
                     st.session_state.user_data['pontos_totais'] += 20
                     supabase.table("usuarios").update({"dados_json": st.session_state.user_data}).eq("username", st.session_state.username).execute()
                     st.rerun()
 
     elif menu == "RANKING GLOBAL":
-        st.subheader("Hall da Fama")
+        st.markdown("""
+        <div style="background:rgba(57, 255, 20, 0.1); padding:10px; border-radius:10px; border-left: 5px solid #39ff14; margin-bottom:20px;">
+            <p style="margin:0; font-size:14px;"><b>INFO:</b> O Hall da Fama mostra os defensores da natureza mais ativos. Compita de forma saudável para inspirar outros!</p>
+        </div>
+        """, unsafe_allow_html=True)
         res = supabase.table("usuarios").select("username, dados_json").execute()
         data = [{"Player": u['username'], "XP": u['dados_json']['pontos_totais']} for u in res.data]
         st.table(pd.DataFrame(data).sort_values("XP", ascending=False))
 
-    elif menu == "ONDE DESCARTAR":
-        st.subheader("Mapa de Descarte")
+    elif menu == "ECO-RADAR":
+        st.markdown("""
+        <div style="background:rgba(57, 255, 20, 0.1); padding:10px; border-radius:10px; border-left: 5px solid #39ff14; margin-bottom:20px;">
+            <p style="margin:0; font-size:14px;"><b>INFO:</b> Utilize o radar para encontrar pontos de descarte correto de eletrônicos e evitar contaminação do solo.</p>
+        </div>
+        """, unsafe_allow_html=True)
         st.map(pd.DataFrame({'lat': [-23.55], 'lon': [-46.63]}))
