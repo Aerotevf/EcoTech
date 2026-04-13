@@ -973,7 +973,7 @@ else:
                 if not c["desbloqueada"]:
                     st.caption(c["desc"])
 
-          # ── HISTÓRICO ────────────────────────────────────────────────────────────
+# ── HISTÓRICO ────────────────────────────────────────────────────────────
     elif menu == "📜 Histórico":
         st.markdown("<h2 style='font-size:20px; margin-bottom:4px;'>📜 Seu Histórico</h2>", unsafe_allow_html=True)
         st.markdown("<p style='font-size:13px; color:var(--muted); margin-bottom:20px;'>Resumo diário das suas atividades.</p>", unsafe_allow_html=True)
@@ -989,7 +989,6 @@ else:
             if not res.data:
                 st.info("Nenhuma atividade registrada ainda.")
             else:
-                # Agrupa por dia
                 from collections import defaultdict
                 dias = defaultdict(lambda: {"transportes": [], "quizzes": []})
 
@@ -1010,7 +1009,6 @@ else:
                     transportes = atividades["transportes"]
                     quizzes     = atividades["quizzes"]
 
-                    # Só mostra dias com pelo menos uma atividade relevante
                     if not transportes and not quizzes:
                         continue
 
@@ -1018,45 +1016,38 @@ else:
                     erros   = sum(1 for q in quizzes if "Errou" in q)
                     co2     = round(len(transportes) * 1.05, 2)
 
+                    # Cabeçalho do dia
                     st.markdown(f"""
-                    <div class="eco-card" style="margin-bottom:16px;">
-                        <p style="font-family:'Press Start 2P',monospace; font-size:9px; color:var(--rosa); letter-spacing:2px; margin-bottom:14px;">
+                    <div class="eco-card" style="margin-bottom:4px;">
+                        <p style="font-family:'Press Start 2P',monospace; font-size:9px; color:var(--rosa); letter-spacing:2px; margin-bottom:0;">
                             📅 {dia}
                         </p>
-
-                        <div style="display:flex; gap:12px; margin-bottom:16px; flex-wrap:wrap;">
-                            <div style="background:rgba(34,197,94,0.1); border:1px solid rgba(34,197,94,0.3); border-radius:10px; padding:10px 16px; flex:1; min-width:120px;">
-                                <p style="font-size:11px; color:var(--muted); margin:0 0 4px;">🌿 CO₂ Economizado</p>
-                                <p style="font-size:20px; font-weight:700; color:#4ADE80; margin:0;">{co2} kg</p>
-                            </div>
-                            <div style="background:rgba(124,58,237,0.1); border:1px solid rgba(124,58,237,0.3); border-radius:10px; padding:10px 16px; flex:1; min-width:120px;">
-                                <p style="font-size:11px; color:var(--muted); margin:0 0 4px;">🚲 Trajetos</p>
-                                <p style="font-size:20px; font-weight:700; color:#C4B5FD; margin:0;">{len(transportes)}</p>
-                            </div>
-                            <div style="background:rgba(236,72,153,0.1); border:1px solid rgba(236,72,153,0.3); border-radius:10px; padding:10px 16px; flex:1; min-width:120px;">
-                                <p style="font-size:11px; color:var(--muted); margin:0 0 4px;">🧠 Quiz</p>
-                                <p style="font-size:20px; font-weight:700; color:#F9A8D4; margin:0;">{acertos} ✅  {erros} ❌</p>
-                            </div>
-                        </div>
+                    </div>
                     """, unsafe_allow_html=True)
 
-                    # Detalhes de transporte
+                    # Métricas do dia
+                    m1, m2, m3 = st.columns(3)
+                    m1.metric("🌿 CO₂ Economizado", f"{co2} kg")
+                    m2.metric("🚲 Trajetos",         len(transportes))
+                    m3.metric("🧠 Quiz",              f"{acertos} ✅  {erros} ❌")
+
+                    # Detalhes transporte
                     if transportes:
-                        st.markdown("<p style='font-size:12px; color:var(--muted); margin-bottom:6px;'>🚲 Registros de transporte</p>", unsafe_allow_html=True)
+                        st.markdown("<p style='font-size:12px; color:var(--muted); margin:12px 0 6px;'>🚲 Registros de transporte</p>", unsafe_allow_html=True)
                         for t in transportes:
                             st.markdown(f"""
                             <div class="rank-row" style="padding:8px 14px; margin-bottom:6px;">
                                 <span style="font-size:16px">🚴</span>
-                                <span style="font-size:13px; color:var(--text);">{t}</span>
+                                <span style="font-size:13px;">{t}</span>
                             </div>
                             """, unsafe_allow_html=True)
 
-                    # Detalhes do quiz
+                    # Detalhes quiz
                     if quizzes:
                         st.markdown("<p style='font-size:12px; color:var(--muted); margin:12px 0 6px;'>🧠 Atividades do quiz</p>", unsafe_allow_html=True)
                         for q in quizzes:
-                            cor   = "#4ADE80" if "Acertou" in q else "#F87171"
                             icone = "✅" if "Acertou" in q else "❌"
+                            cor   = "#4ADE80" if "Acertou" in q else "#F87171"
                             st.markdown(f"""
                             <div class="rank-row" style="padding:8px 14px; margin-bottom:6px;">
                                 <span style="font-size:16px">{icone}</span>
@@ -1064,7 +1055,7 @@ else:
                             </div>
                             """, unsafe_allow_html=True)
 
-                    st.markdown("</div>", unsafe_allow_html=True)
+                    st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
 
         except Exception as e:
             st.error(f"Erro ao carregar histórico: {e}")
