@@ -665,11 +665,11 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-                   if st.button("✅ Confirmar trajeto"):
+                                   if st.button("✅ Confirmar trajeto"):
                     dados["pontos_totais"] += int(tempo * 0.5)
                     dados["total_trajetos"] += 1
                     salvar_dados(dados)
-                
+
                     registrar_acesso(f"Ação: Transporte ({tipo})") 
                     
                     st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
@@ -703,35 +703,38 @@ else:
                     <p style="font-size:15px; font-weight:600; margin-bottom:14px; line-height:1.5;">{item['q']}</p>
                     """, unsafe_allow_html=True)
 
-                    if not st.session_state.quiz_respondido:
-                        resp = st.radio("Escolha:", item["a"], key=f"quiz_{tentativas}", label_visibility="collapsed")
+                                        if not st.session_state.quiz_respondido:
+                        resp = st.radio(
+                            "Escolha:",
+                            item["a"],
+                            key=f"quiz_{tentativas}",
+                            label_visibility="collapsed"
+                        )
 
-                       if st.button("📤 Enviar resposta"):
-    atualizar_streak()
-    acertou = resp == item["r"]
+                        if st.button("📤 Enviar resposta"):
+                            atualizar_streak()
+                            acertou = resp == item["r"]
 
-    if acertou:
-        dados["pontos_totais"] += 20
-        dados["total_quizzes_certos"] = dados.get("total_quizzes_certos", 0) + 1
-        mensagem = "✅ Correto! +20 XP"
-        tipo_msg = "success"
-    else:
-        mensagem = f"❌ A resposta certa era: {item['r']}"
-        tipo_msg = "error"
+                            if acertou:
+                                dados["pontos_totais"] += 20
+                                dados["total_quizzes_certos"] = dados.get("total_quizzes_certos", 0) + 1
+                                mensagem = "✅ Correto! +20 XP"
+                                tipo_msg = "success"
+                            else:
+                                mensagem = f"❌ A resposta certa era: {item['r']}"
+                                tipo_msg = "error"
 
-    # --- LINHA CORRIGIDA PARA O SUPABASE ---
-    resultado = "Acertou" if acertou else "Errou"
-    registrar_acesso(f"Quiz: {resultado} ({item['q']})")
-    # ---------------------------------------
+                            resultado = "Acertou" if acertou else "Errou"
+                            registrar_acesso(f"Quiz: {resultado} ({item['q']})")
 
-    st.session_state.quiz_feedback = {
-        "tipo": tipo_msg,
-        "mensagem": mensagem,
-        "exp": item["exp"]
-    }
-    st.session_state.quiz_respondido = True
-    salvar_dados(dados)
-    st.rerun()
+                            st.session_state.quiz_feedback = {
+                                "tipo": tipo_msg,
+                                "mensagem": mensagem,
+                                "exp": item["exp"]
+                            }
+                            st.session_state.quiz_respondido = True
+                            salvar_dados(dados)
+                            st.rerun()
 
                     else:
                         feedback = st.session_state.quiz_feedback
