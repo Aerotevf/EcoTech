@@ -691,7 +691,7 @@ else:
             """, unsafe_allow_html=True)
 
         st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
-        menu = st.radio("Nav", ["📊 Painel", "🏆 Ranking", "🗺️ Eco-Radar", "🏅 Conquistas"], label_visibility="collapsed")
+        menu = st.radio("Nav", ["📊 Painel", "🏆 Ranking", "🗺️ Eco-Radar", "🏅 Conquistas", "📜 Histórico"], label_visibility="collapsed")
         st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
 
         if st.button("Sair"):
@@ -972,3 +972,53 @@ else:
                 """, unsafe_allow_html=True)
                 if not c["desbloqueada"]:
                     st.caption(c["desc"])
+
+                    # ── HISTÓRICO ────────────────────────────────────────────────────────────
+    elif menu == "📜 Histórico":
+        st.markdown("<h2 style='font-size:20px; margin-bottom:4px;'>📜 Seu Histórico</h2>", unsafe_allow_html=True)
+        st.markdown("<p style='font-size:13px; color:var(--muted); margin-bottom:20px;'>Todas as suas atividades registradas.</p>", unsafe_allow_html=True)
+
+        try:
+            res = supabase.table("acessos")\
+                .select("acao, data_hora")\
+                .eq("usuario", st.session_state.username)\
+                .order("data_hora", desc=True)\
+                .limit(50)\
+                .execute()
+
+            if not res.data:
+                st.info("Nenhuma atividade registrada ainda.")
+            else:
+                ICONES = {
+                    "Login":     "🔑",
+                    "logout":    "🚪",
+                    "Quiz":      "🧠",
+                    "Ação":      "🚲",
+                    "Transporte":"🚲",
+                }
+
+                for item in res.data:
+                    acao     = item["acao"]
+                    hora_raw = item["data_hora"]
+
+                    # Formata a data
+                    try:
+                        dt   = datetime.fromisoformat(hora_raw)
+                        hora = dt.strftime("%d/%m/%Y às %H:%M")
+                    except Exception:
+                        hora = hora_raw
+
+                    # Escolhe ícone pela primeira palavra da ação
+                    primeira = acao.split()[0] if acao else ""
+                    icone    = ICONES.get(primeira, "📌")
+
+                    st.markdown(f"""
+                    <div class="rank-row">
+                        <span style="font-size:20px">{icone}</span>
+                        <span class="rank-name" style="font-size:13px;">{acao}</span>
+                        <span style="font-size:11px; color:var(--muted);">{hora}</span>
+                    </div>
+                    """, unsafe_allow_html=True)
+
+        except Exception as e:
+            st.error(f"Erro ao carregar histórico: {e}")
