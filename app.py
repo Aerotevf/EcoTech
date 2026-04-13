@@ -46,6 +46,25 @@ h1,h2,h3,h4,h5,h6,p,li,label,
     font-size: 14px !important;
     font-weight: 600 !important;
 }
+[data-testid="stExpander"] details summary:hover p,
+[data-testid="stExpander"] details summary p {
+    color: #E2E8F0 !important;
+    opacity: 1 !important;
+}
+
+/* Ícone de seta do expander sempre visível */
+[data-testid="stExpander"] details summary svg {
+    fill: #E2E8F0 !important;
+    opacity: 1 !important;
+}
+
+/* Métricas: valor e label em branco */
+[data-testid="stMetricValue"] > div,
+[data-testid="stMetricValue"] span,
+[data-testid="stMetricLabel"] > div,
+[data-testid="stMetricLabel"] span {
+    color: #E2E8F0 !important;
+}
 input,[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input {
     background: rgba(255,255,255,0.06) !important;
     border: 1px solid var(--border) !important;
