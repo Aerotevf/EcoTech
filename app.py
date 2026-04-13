@@ -417,6 +417,30 @@ if not st.session_state.logged_in:
                 st.error(f"Erro de conexão: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
+if st.button("▶ INICIAR MISSÃO"):
+    # seu código de login (mantém igual)
+
+# 👇 ADICIONE ISSO AQUI (logo abaixo)
+if st.button("📝 CADASTRAR NOVO USUÁRIO"):
+    try:
+        existente = supabase.table("usuarios").select("*").eq("username", u).execute()
+
+        if existente.data:
+            st.warning("Usuário já existe.")
+        else:
+            novo_usuario = {
+                "username": u,
+                "password": p,
+                "dados_json": {
+                    "pontos_totais": 0
+                }
+            }
+            supabase.table("usuarios").insert(novo_usuario).execute()
+            st.success("Usuário cadastrado com sucesso!")
+
+    except Exception as e:
+        st.error(f"Erro ao cadastrar: {e}")
+
 # ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 else:
     dados = st.session_state.user_data
