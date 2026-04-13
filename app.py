@@ -33,11 +33,18 @@ st.markdown("""
     background: rgba(10,10,20,0.97) !important;
     border-right: 1px solid var(--border) !important;
 }
-h1,h2,h3,h4,h5,h6,p,li,span,label,div,
+h1,h2,h3,h4,h5,h6,p,li,label,
 .stMetric,[data-testid="stMarkdown"] p,
 [data-testid="stMetricValue"],[data-testid="stMetricLabel"] {
     color: var(--text) !important;
     font-family: 'Space Grotesk', sans-serif !important;
+}
+
+[data-testid="stExpander"] details summary p {
+    color: var(--text) !important;
+    font-family: 'Space Grotesk', sans-serif !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
 }
 input,[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input {
     background: rgba(255,255,255,0.06) !important;
