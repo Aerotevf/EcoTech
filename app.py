@@ -359,7 +359,6 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ─── LOGIN ────────────────────────────────────────────────────────────────────
-# ─── LOGIN ────────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
     col1, col2 = st.columns([1.5, 1], gap="large")
 
@@ -389,8 +388,7 @@ if not st.session_state.logged_in:
                     <div class="xp-req">{pat['min']}+ XP</div>
                 </div>
                 """, unsafe_allow_html=True)
-
-    # ✅ COLUNA DO LOGIN CORRIGIDA
+                
     with col2:
         st.markdown('<div class="eco-card">', unsafe_allow_html=True)
 
