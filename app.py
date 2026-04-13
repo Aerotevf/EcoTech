@@ -7,20 +7,23 @@ from supabase import create_client, Client
 # ─── CONFIGURAÇÃO DA PÁGINA ───────────────────────────────────────────────────
 st.set_page_config(page_title="EcoTech", page_icon="🌿", layout="wide")
 
-# CSS PERSONALIZADO (CYBER-NATURE + PIXEL ART + CONTRASTE)
+# CSS PERSONALIZADO (CYBER-NATURE + PIXEL ART + FUNDO ANIMADO)
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&family=DM+Sans:wght@400;700&display=swap');
 
-/* Fundo Verde-Escuro Tecnológico (Melhor Contraste) */
+/* Forçar Fundo Transparente para a Animação aparecer */
+[data-testid="stAppViewContainer"], [data-testid="stHeader"] {
+    background-color: transparent !important;
+}
+
 [data-testid="stAppViewContainer"] {
-    background: linear-gradient(180deg, #051a05 0%, #020814 100%) !important;
     font-family: 'DM Sans', sans-serif !important;
 }
 
 /* Sidebar Estilo Terminal */
 [data-testid="stSidebar"] {
-    background-color: rgba(0, 20, 0, 0.9) !important;
+    background-color: rgba(0, 15, 0, 0.95) !important;
     border-right: 2px solid #39ff14;
 }
 
@@ -35,18 +38,30 @@ h1, h2, h3, .pixel-font {
 p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
     color: #ffffff !important;
     font-size: 16px !important;
+    font-weight: 500;
 }
 
-/* Logo Grande e Brilhante */
-.logo-pixel {
+/* Logo GIGANTE, Centralizado e Brilhante */
+.logo-pixel-home {
     font-family: 'Press Start 2P', cursive !important;
-    font-size: 45px;
+    font-size: 80px; /* BEM GRANDE */
     text-align: center;
-    padding: 20px;
+    padding: 50px 0;
+    margin-bottom: 30px;
     background: -webkit-linear-gradient(#39ff14, #00ffcc);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
-    filter: drop-shadow(4px 4px #000);
+    filter: drop-shadow(6px 6px #000);
+}
+
+/* Logo Interno (no topo das abas) */
+.logo-pixel-interno {
+    font-family: 'Press Start 2P', cursive !important;
+    font-size: 30px;
+    text-align: center;
+    padding: 15px 0;
+    color: #39ff14 !important;
+    text-shadow: 2px 2px #000;
 }
 
 /* Botões Estilo Arcade Retro */
@@ -55,7 +70,7 @@ p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
     color: #39ff14 !important;
     border: 3px solid #39ff14 !important;
     font-family: 'Press Start 2P', cursive !important;
-    font-size: 12px !important;
+    font-size: 14px !important;
     border-radius: 0px !important;
     box-shadow: 6px 6px 0px #052b05;
 }
@@ -66,40 +81,116 @@ p, li, span, label, .stMetric, [data-testid="stMarkdown"] p {
 }
 
 .card-pixel {
-    background: rgba(255, 255, 255, 0.08);
+    background: rgba(0, 30, 0, 0.8);
     border: 2px solid #00ffcc;
     padding: 25px;
     margin-bottom: 20px;
 }
+
+/* Mensagem de Erro Vermelha vibrante */
+.stError {
+    background-color: #330000 !important;
+    color: #ff3333 !important;
+    border: 2px solid #ff3333 !important;
+    font-weight: bold;
+}
 </style>
 """, unsafe_allow_html=True)
 
+# ─── ANIMAÇÃO DE FUNDO (CÓDIGO MATRIX COM FOLHAS) ──────────────────────────
+st.markdown("""
+<canvas id="canvas"></canvas>
+<script>
+    var canvas = document.getElementById('canvas');
+    var ctx = canvas.getContext('2d');
+
+    // Forçar o canvas a cobrir toda a tela
+    canvas.height = window.innerHeight;
+    canvas.width = window.innerWidth;
+    canvas.style.position = 'fixed';
+    canvas.style.top = '0';
+    canvas.style.left = '0';
+    canvas.style.zIndex = '-1'; // Fica atrás de tudo
+
+    // Caracteres e Símbolos
+    var letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789@#$&*🌿🌱';
+    letters = letters.split('');
+
+    var fontSize = 16;
+    var columns = canvas.width / fontSize;
+
+    // Posição vertical de cada coluna
+    var drops = [];
+    for (var x = 0; x < columns; x++)
+        drops[x] = 1;
+
+    // Função de desenho
+    function draw() {
+        // Fundo preto translúcido para criar o efeito de rastro
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+        ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+        ctx.fillStyle = '#39ff14'; // Cor Verde Neon
+        ctx.font = fontSize + 'px arial';
+
+        for (var i = 0; i < drops.length; i++) {
+            var text = letters[Math.floor(Math.random() * letters.length)];
+            ctx.fillText(text, i * fontSize, drops[i] * fontSize);
+
+            // Reiniciar a gota se chegar ao fim da tela
+            if (drops[i] * fontSize > canvas.width && Math.random() > 0.975)
+                drops[i] = 0;
+
+            drops[i]++;
+        }
+    }
+
+    // Rodar a animação
+    setInterval(draw, 33);
+    
+    // Ajustar tamanho se a janela mudar
+    window.onresize = function() {
+        canvas.height = window.innerHeight;
+        canvas.width = window.innerWidth;
+        columns = canvas.width / fontSize;
+        for (var x = 0; x < columns; x++) drops[x] = 1;
+    }
+</script>
+""", unsafe_allow_html=True)
+
 # ─── CONEXÃO SUPABASE ──────────────────────────────────────────────────────────
+# Substitua com suas credenciais reais
 URL_DB = "https://cusjupdmiqxgtwbubynu.supabase.co"
 KEY_DB = "sb_publishable_LDsAzMOj3NCHso8nVAeTMQ_WBzj3rb7"
 supabase: Client = create_client(URL_DB, KEY_DB)
 
 # ─── LÓGICA DO SISTEMA ────────────────────────────────────────────────────────
 
+def obter_nivel(pontos):
+    if pontos >= 500: return "👑 Guardião"
+    if pontos >= 250: return "🌳 Árvore"
+    if pontos >= 100: return "🌿 Broto"
+    return "🌱 Semente"
+
+def salvar_dados(dados):
+    supabase.table("usuarios").update({"dados_json": dados}).eq("username", st.session_state.username).execute()
+
 def carregar_ranking():
     res = supabase.table("usuarios").select("username, dados_json").execute()
     data = []
     for u in res.data:
         p = u['dados_json'].get('pontos_totais', 0)
-        data.append({"PLAYER": u['username'], "XP (PONTOS)": p})
+        data.append({"NÍVEL": obter_nivel(p), "PLAYER": u['username'], "XP (PONTOS)": p})
     return pd.DataFrame(data).sort_values("XP (PONTOS)", ascending=False)
-
-def curisidade_impacto(kg):
-    if kg <= 0: return "Sua jornada começa agora! Faça sua primeira ação."
-    elif kg < 5: return f"Isso equivale a carregar seu celular {int(kg*120)} vezes!"
-    else: return f"Impacto incrível! Você poupou o planeta de {int(kg/0.02)} canudos de plástico!"
 
 # ─── INTERFACE ────────────────────────────────────────────────────────────────
 
 if 'logged_in' not in st.session_state: st.session_state.logged_in = False
 
+# TELA DE ACESSO (Home/Login)
 if not st.session_state.logged_in:
-    st.markdown('<p class="logo-pixel">ECOTECH</p>', unsafe_allow_html=True)
+    # Logo GIGANTE na Home
+    st.markdown('<p class="logo-pixel-home">ECOTECH</p>', unsafe_allow_html=True)
     
     col1, col2 = st.columns([2, 1])
     with col1:
@@ -107,107 +198,108 @@ if not st.session_state.logged_in:
         st.subheader("📖 MANUAL DA MISSÃO")
         st.write("**OBJETIVO:** Salvar o planeta ganhando XP através de ações reais.")
         st.write("---")
-        st.write("🟢 **PAINEL:** Veja seus atributos e o carbono que você evitou.")
-        st.write("🔵 **QUIZ:** Acerte perguntas para ganhar bônus de inteligência.")
-        st.write("🟡 **MAPA:** Encontre locais para descartar seu 'lixo-tech'.")
-        st.write("🔴 **ECO-JUMP:** Treine seus reflexos e ganhe pontos extras.")
+        st.write("🏃 **MISSÕES:** Registre transporte, reciclagem e responda Quizzes.")
+        st.write("🏆 **RANKING:** Veja quem são os melhores defensores da natureza.")
+        st.write("💡 **IMPACTO:** Aprenda sobre o carbono que você evitou.")
+        st.write("<i>Transforme o mundo enquanto evolui seu perfil!</i>")
         st.markdown('</div>', unsafe_allow_html=True)
     
     with col2:
         st.markdown('<div class="card-pixel">', unsafe_allow_html=True)
-        st.subheader("LOGIN")
-        u = st.text_input("USER")
-        p = st.text_input("PASS", type="password")
-        if st.button("START"):
-            res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
-            if res.data:
-                st.session_state.logged_in = True
-                st.session_state.username = u
-                st.session_state.user_data = res.data[0]['dados_json']
-                st.rerun()
+        st.subheader("ACESSO")
+        u = st.text_input("USER", placeholder="seu_usuario")
+        p = st.text_input("PASS", type="password", placeholder="••••••••")
+        if st.button("START →"):
+            try:
+                res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
+                if res.data:
+                    st.session_state.logged_in = True
+                    st.session_state.username = u
+                    st.session_state.user_data = res.data[0]['dados_json']
+                    st.rerun()
+                else:
+                    st.error("❌ Usuário ou senha incorretos. Tente novamente.")
+            except:
+                st.error("⚠️ Erro de conexão com o servidor.")
         st.markdown('</div>', unsafe_allow_html=True)
 
 else:
+    # ─── SISTEMA LOGADO ───
     with st.sidebar:
-        st.markdown(f"## 🔋 XP: {st.session_state.user_data['pontos_totais']}")
-        menu = st.radio("SELECIONE A FASE:", ["📊 STATUS (PAINEL)", "🧠 DESAFIO (QUIZ)", "🗺️ RADAR (MAPA)", "🏆 RANKING", "🕹️ MINI-GAME"])
+        # PAINEL DO USUÁRIO NO TOPO DA SIDEBAR
+        st.markdown(f"### 👾 Olá, {st.session_state.username}")
+        pts_atuais = st.session_state.user_data['pontos_totais']
+        st.write(f"Sua Patente: **{obter_nivel(pts_atuais)}**")
+        st.write(f"Total XP: **{pts_atuais}**")
         st.divider()
-        if st.button("LOGOUT"):
+        
+        menu = st.radio("FASES DO SISTEMA:", ["📊 PAINEL DE IMPACTO", "🏆 RANKING GLOBAL", "🗺️ MAPA DE COLETA"])
+        st.divider()
+        if st.button("QUIT (SAIR)"):
             st.session_state.logged_in = False
             st.rerun()
 
-    if menu == "📊 STATUS (PAINEL)":
-        st.markdown('<h1 class="pixel-font">STATUS DO PLAYER</h1>', unsafe_allow_html=True)
-        st.write("Aqui você acompanha sua evolução e o impacto real no planeta.")
+    # Logo no topo de todas as abas internas
+    st.markdown('<p class="logo-pixel-interno">ECOTECH</p>', unsafe_allow_html=True)
+
+    if menu == "📊 PAINEL DE IMPACTO":
+        st.subheader("Seu Status e Missões Diárias")
         
         pts = st.session_state.user_data['pontos_totais']
         kg_co2 = pts * 0.1
         
-        c1, c2 = st.columns(2)
-        c1.metric("PONTOS TOTAIS", f"{pts} XP")
-        c2.metric("CO2 POUPADO", f"{kg_co2:.1f} KG")
+        c1, c2, c3 = st.columns(3)
+        with c1: st.metric("XP ATUAL", f"{pts} pts")
+        with c2: st.metric("CARBONO EVITADO", f"{kg_co2:.1f} kg")
+        with c3: st.metric("NÍVEL", obter_nivel(pts))
         
-        st.warning(f"💡 **IMPACTO REAL:** {curisidade_impacto(kg_co2)}")
-
         st.markdown("---")
-        st.subheader("🏃 MISSÕES DIÁRIAS")
-        with st.expander("COMO GANHAR PONTOS? (CLIQUE AQUI)"):
-            st.write("Escolha uma ação abaixo para registrar seu progresso sustentável:")
+        st.subheader("🏃 MISSÕES DISPONÍVEIS (+XP)")
+        
+        # QUIZ JÁ NAS MISSÕES DIÁRIAS
+        with st.expander("🧠 DESAFIO INTEL (QUIZ DIÁRIO)"):
+            if 'pergunta' not in st.session_state:
+                st.session_state.pergunta = random.choice([
+                    {"p": "Qual destes materiais polui mais o oceano?", "o": ["Papel", "Vidro", "Plástico"], "r": "Plástico"},
+                    {"p": "Reciclar uma tonelada de papel salva quantas árvores?", "o": ["5", "17", "50"], "r": "17"}
+                ])
             
-            if st.button("🚲 USEI TRANSPORTE VERDE (+10 XP)"):
-                st.session_state.user_data['pontos_totais'] += 10
-                supabase.table("usuarios").update({"dados_json": st.session_state.user_data}).eq("username", st.session_state.username).execute()
-                st.success("Missão Cumprida! XP Adicionado.")
-                st.rerun()
+            st.markdown(f"### {st.session_state.pergunta['p']}")
+            resp = st.radio("Sua resposta:", st.session_state.pergunta['o'])
+            
+            if st.button("RESPONDER QUIZ"):
+                if resp == st.session_state.pergunta['r']:
+                    st.success("ACERTO CRÍTICO! +20 XP")
+                    st.session_state.user_data['pontos_totais'] += 20
+                    salvar_dados(st.session_state.user_data)
+                    del st.session_state.pergunta # Nova pergunta no próximo clique
+                else:
+                    st.error("Tente novamente amanhã!")
 
-    elif menu == "🧠 DESAFIO (QUIZ)":
-        st.markdown('<h1 class="pixel-font">BOSS QUIZ</h1>', unsafe_allow_html=True)
-        st.write("Responda sem errar para ganhar bônus de XP. Se errar, o Boss vence!")
-        
-        if 'pergunta' not in st.session_state:
-            st.session_state.pergunta = random.choice([
-                {"p": "Qual destes lixos é o mais perigoso se jogado no mar?", "o": ["Papel", "Pilhas", "Resto de comida"], "r": "Pilhas"},
-                {"p": "Reciclar uma tonelada de papel salva quantas árvores?", "o": ["5", "17", "50"], "r": "17"}
-            ])
-        
-        st.markdown(f"### {st.session_state.pergunta['p']}")
-        resp = st.radio("Sua resposta:", st.session_state.pergunta['o'])
-        
-        if st.button("CONFIRMAR RESPOSTA"):
-            if resp == st.session_state.pergunta['r']:
-                st.success("ACERTO CRÍTICO! +20 XP")
-                st.session_state.user_data['pontos_totais'] += 20
-                supabase.table("usuarios").update({"dados_json": st.session_state.user_data}).eq("username", st.session_state.username).execute()
-                del st.session_state.pergunta # Nova pergunta no próximo clique
-            else:
-                st.error("GAME OVER! Essa você errou.")
+        # TODAS AS OPÇÕES DE TRANSPORTE SUSTENTÁVEL
+        with st.expander("🚲 TRANSPORTE SUSTENTÁVEL"):
+            opcoes_transporte = ["Fui de Bike/A pé", "Usei Ônibus/Metrô", "Carona Compartilhada"]
+            transporte = st.radio("Como você se locomoveu?", opcoes_transporte)
+            if st.button("REGISTRAR TRAJETO"):
+                pts_transporte = 10 if transporte == "Carona Compartilhada" else 15
+                st.session_state.user_data['pontos_totais'] += pts_transporte
+                salvar_dados(st.session_state.user_data)
+                st.success(f"+{pts_transporte} XP Adicionado! Bom trajeto.")
 
-    elif menu == "🗺️ RADAR (MAPA)":
-        st.markdown('<h1 class="pixel-font">ECO-RADAR</h1>', unsafe_allow_html=True)
-        st.write("Filtre por categoria para encontrar o ponto de descarte correto:")
-        cat = st.selectbox("O QUE VOCÊ TEM PARA DESCARTAR?", ["Eletrônicos", "Pilhas e Baterias", "Óleo de Cozinha", "Plásticos"])
-        st.write(f"Exibindo pontos de coleta para: **{cat}**")
-        st.map(pd.DataFrame({'lat': [-23.55], 'lon': [-46.63]})) # Exemplo SP
+        # DESCARTE ELETRÔNICO
+        with st.expander("📱 DESCARTE CORRETO"):
+            tipo = st.selectbox("O que você descartou?", ["Pilhas/Baterias", "Celular Antigo", "Cabos/Periféricos"])
+            if st.button("REGISTRAR DESCARTE"):
+                st.session_state.user_data['pontos_totais'] += 30
+                salvar_dados(st.session_state.user_data)
+                st.success("+30 XP! Ótima ação para o planeta.")
 
-    elif menu == "🏆 RANKING":
-        st.markdown('<h1 class="pixel-font">HALL OF FAME</h1>', unsafe_allow_html=True)
+    elif menu == "🏆 RANKING GLOBAL":
+        st.subheader("Melhores Defensores do Planeta")
         df = carregar_ranking()
         st.dataframe(df, use_container_width=True, hide_index=True)
 
-    elif menu == "🕹️ MINI-GAME":
-        st.markdown('<h1 class="pixel-font">ECO-JUMP</h1>', unsafe_allow_html=True)
-        st.write("A cada 10 pulos, você limpa uma área e ganha +5 XP!")
-        
-        if 'pulos' not in st.session_state: st.session_state.pulos = 0
-        
-        st.markdown(f"## PROGRESSO: {st.session_state.pulos}/10")
-        st.progress(st.session_state.pulos / 10)
-        
-        if st.button("PULAR ⬆️"):
-            st.session_state.pulos += 1
-            if st.session_state.pulos >= 10:
-                st.session_state.user_data['pontos_totais'] += 5
-                supabase.table("usuarios").update({"dados_json": st.session_state.user_data}).eq("username", st.session_state.username).execute()
-                st.session_state.pulos = 0
-                st.balloons()
-                st.success("ÁREA LIMPA! +5 XP")
+    elif menu == "🗺️ MAPA DE COLETA":
+        st.subheader("Onde descartar seu 'Lixo-Tech'?")
+        mapa_data = pd.DataFrame({'lat': [-23.55], 'lon': [-46.63]}) # Exemplo SP
+        st.map(mapa_data)
