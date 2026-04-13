@@ -307,17 +307,17 @@ def salvar_dados(dados):
         st.toast(f"Erro ao salvar: {e}", icon="⚠️")
         return False
 
-def registrar_acesso(evento, detalhes=None):
+def registrar_acesso(acao, detalhes=None):
     if "username" not in st.session_state:
         return
     try:
         supabase.table("acessos").insert({
-            "username": st.session_state.username,
-            "evento": evento,
-            "detalhes": detalhes or {},
-            "criado_em": datetime.utcnow().isoformat()
+            "usuario": st.session_state.username,
+            "acao": acao,
+            "data_hora": datetime.now().isoformat()
         }).execute()
-    except Exception:
+    except Exception as e:
+        # st.toast(f"Erro log: {e}")
         pass
 
 # ─── PATENTES ─────────────────────────────────────────────────────────────────
@@ -494,7 +494,7 @@ if not st.session_state.logged_in:
                     st.session_state.quiz_feedback = None
                     st.session_state.quiz_respondido = False
 
-                    registrar_acesso("login_sucesso", {"username": u})
+                    registrar_acesso("Login realizado")
                     st.rerun()
                 else:
                     try:
@@ -665,19 +665,14 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-                if st.button("✅ Confirmar trajeto"):
-                    dados["pontos_totais"] += xp_ganho
-                    dados["total_trajetos"] = dados.get("total_trajetos", 0) + 1
-                    atualizar_streak()
+                   if st.button("✅ Confirmar trajeto"):
+                    dados["pontos_totais"] += int(tempo * 0.5)
+                    dados["total_trajetos"] += 1
                     salvar_dados(dados)
-                    registrar_acesso("trajeto_registrado", {
-                        "tempo": tempo,
-                        "tipo": tipo,
-                        "distancia": distancia,
-                        "co2_salvo": co2_salvo,
-                        "xp_ganho": xp_ganho
-                    })
-                    st.success(f"Trajeto registrado! +{xp_ganho} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
+                
+                    registrar_acesso(f"Ação: Transporte ({tipo})") 
+                    
+                    st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
                     st.rerun()
 
         with col_b:
@@ -711,36 +706,32 @@ else:
                     if not st.session_state.quiz_respondido:
                         resp = st.radio("Escolha:", item["a"], key=f"quiz_{tentativas}", label_visibility="collapsed")
 
-                        if st.button("📤 Enviar resposta"):
-                            atualizar_streak()
-                            acertou = resp == item["r"]
+                       if st.button("📤 Enviar resposta"):
+    atualizar_streak()
+    acertou = resp == item["r"]
 
-                            if acertou:
-                                dados["pontos_totais"] += 20
-                                dados["total_quizzes_certos"] = dados.get("total_quizzes_certos", 0) + 1
-                                mensagem = "✅ Correto! +20 XP"
-                                tipo_msg = "success"
-                            else:
-                                mensagem = f"❌ A resposta certa era: {item['r']}"
-                                tipo_msg = "error"
+    if acertou:
+        dados["pontos_totais"] += 20
+        dados["total_quizzes_certos"] = dados.get("total_quizzes_certos", 0) + 1
+        mensagem = "✅ Correto! +20 XP"
+        tipo_msg = "success"
+    else:
+        mensagem = f"❌ A resposta certa era: {item['r']}"
+        tipo_msg = "error"
 
-                            st.session_state.quiz_feedback = {
-                                "tipo": tipo_msg,
-                                "mensagem": mensagem,
-                                "exp": item["exp"],
-                                "resposta_usuario": resp,
-                                "resposta_certa": item["r"],
-                                "pergunta": item["q"]
-                            }
-                            st.session_state.quiz_respondido = True
-                            salvar_dados(dados)
-                            registrar_acesso("quiz_respondido", {
-                                "pergunta": item["q"],
-                                "resposta_usuario": resp,
-                                "resposta_certa": item["r"],
-                                "acertou": acertou
-                            })
-                            st.rerun()
+    # --- LINHA CORRIGIDA PARA O SUPABASE ---
+    resultado = "Acertou" if acertou else "Errou"
+    registrar_acesso(f"Quiz: {resultado} ({item['q']})")
+    # ---------------------------------------
+
+    st.session_state.quiz_feedback = {
+        "tipo": tipo_msg,
+        "mensagem": mensagem,
+        "exp": item["exp"]
+    }
+    st.session_state.quiz_respondido = True
+    salvar_dados(dados)
+    st.rerun()
 
                     else:
                         feedback = st.session_state.quiz_feedback
