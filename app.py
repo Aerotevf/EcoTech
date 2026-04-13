@@ -321,7 +321,26 @@ div[role="option"]:hover {
     padding: 12px 16px; margin: 10px 0;
     font-size: 13px !important; color: #BBF7D0 !important; line-height: 1.6;
 }
+.streamlit-expanderHeader {
+    color: #E2E8F0 !important;
+    opacity: 1 !important;
+}
+.streamlit-expanderHeader p {
+    color: #E2E8F0 !important;
+    opacity: 1 !important;
+}
+.streamlit-expanderHeader svg {
+    fill: #E2E8F0 !important;
+    stroke: #E2E8F0 !important;
+}
 
+/* FORÇA valores das métricas */
+div[data-testid="stMetricValue"] * {
+    color: #E2E8F0 !important;
+}
+div[data-testid="stMetricLabel"] * {
+    color: #94A3B8 !important;
+}
 .sep { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 24px 0; }
 
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
