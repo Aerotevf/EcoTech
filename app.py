@@ -343,6 +343,11 @@ div[data-testid="stMetricLabel"] * {
 }
 .sep { height: 1px; background: linear-gradient(90deg, transparent, var(--border), transparent); margin: 24px 0; }
 
+[data-testid="stExpander"] details summary [data-testid="stMarkdownContainer"] p {
+    color: #E2E8F0 !important;
+    opacity: 1 !important;
+}
+
 @keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
 .eco-card, .rank-row, .emblema-card { animation: fadeIn 0.3s ease; }
 </style>
