@@ -703,7 +703,7 @@ else:
                     <p style="font-size:15px; font-weight:600; margin-bottom:14px; line-height:1.5;">{item['q']}</p>
                     """, unsafe_allow_html=True)
 
-                                        if not st.session_state.quiz_respondido:
+                    if not st.session_state.quiz_respondido:
                         resp = st.radio(
                             "Escolha:",
                             item["a"],
