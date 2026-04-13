@@ -752,7 +752,7 @@ else:
                     dados["total_trajetos"] += 1
                     salvar_dados(dados)
 
-                    registrar_acesso(f"Transporte: {tipo} | {distancia} km | {co2_salvo} kg CO₂")) 
+                    registrar_acesso(f"Transporte: {tipo} | {distancia} km | {co2_salvo} kg CO₂")
                     
                     st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
                     st.rerun()
