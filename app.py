@@ -765,6 +765,7 @@ else:
                 tempo = st.number_input("Duração (minutos):", 5, 120, 20, key="tempo_t")
                 tipo = st.selectbox("Modalidade:", ["🚴 Bike / Caminhada", "🚌 Ônibus / Metrô"], key="tipo_t")
                 distancia = st.number_input("Distância estimada (km):", 0.5, 100.0, 5.0, step=0.5, key="dist_t")
+                distancia = min(distancia, 100.0)
 
                 if "Bike" in tipo:
                     co2_salvo = round(distancia * 0.21, 2)
@@ -782,9 +783,6 @@ else:
                 """, unsafe_allow_html=True)
 
                 if st.button("✅ Confirmar trajeto"):
-                    if distancia > 100:
-                        st.error("A distância deve ser menor ou igual a 100 km!")
-                    else:
                         dados["pontos_totais"] += int(tempo * 0.5)
                         dados["total_trajetos"] += 1
                         atualizar_streak()
