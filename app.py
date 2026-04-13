@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
 import random
-from datetime import date
+from datetime import date, datetime
 from supabase import create_client, Client
 
 # ─── CONFIGURAÇÃO ─────────────────────────────────────────────────────────────
@@ -86,7 +86,8 @@ input,[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input {
 }
 
 [data-baseweb="select"] span,
-[data-baseweb="select"] div {
+[data-baseweb="select"] div,
+[data-baseweb="select"] * {
     color: var(--text) !important;
 }
 
@@ -275,13 +276,49 @@ URL_DB = st.secrets.get("SUPABASE_URL", "https://cusjupdmiqxgtwbubynu.supabase.c
 KEY_DB = st.secrets.get("SUPABASE_KEY", "sb_publishable_LDsAzMOj3NCHso8nVAeTMQ_WBzj3rb7")
 supabase: Client = create_client(URL_DB, KEY_DB)
 
+def dados_iniciais():
+    return {
+        "pontos_totais": 0,
+        "tentativas_quiz": 0,
+        "data_quiz": "",
+        "idx_perguntas_hoje": [],
+        "total_quizzes_certos": 0,
+        "total_trajetos": 0,
+        "streak_dias": 0,
+        "ultima_atividade": ""
+    }
+
+def normalizar_dados(dados):
+    base = dados_iniciais()
+    if not isinstance(dados, dict):
+        return base
+    base.update(dados)
+    return base
+
 def salvar_dados(dados):
+    dados = normalizar_dados(dados)
+    st.session_state.user_data = dados
     try:
         supabase.table("usuarios").update({"dados_json": dados}).eq(
             "username", st.session_state.username
         ).execute()
+        return True
     except Exception as e:
         st.toast(f"Erro ao salvar: {e}", icon="⚠️")
+        return False
+
+def registrar_acesso(evento, detalhes=None):
+    if "username" not in st.session_state:
+        return
+    try:
+        supabase.table("acessos").insert({
+            "username": st.session_state.username,
+            "evento": evento,
+            "detalhes": detalhes or {},
+            "criado_em": datetime.utcnow().isoformat()
+        }).execute()
+    except Exception:
+        pass
 
 # ─── PATENTES ─────────────────────────────────────────────────────────────────
 PATENTES = [
@@ -307,7 +344,7 @@ def barra_xp(pts):
     if idx == len(PATENTES) - 1:
         return 100, 0, None
     prox = PATENTES[idx + 1]
-    pct  = int((pts - pat["min"]) / (prox["min"] - pat["min"]) * 100)
+    pct = int((pts - pat["min"]) / (prox["min"] - pat["min"]) * 100)
     return min(100, pct), prox["min"] - pts, prox
 
 # ─── QUIZ ─────────────────────────────────────────────────────────────────────
@@ -336,7 +373,7 @@ PERGUNTAS = [
     {"q": "O que destruiu a camada de ozônio?",
      "a": ["CO₂ de veículos", "CFCs de aerossóis e geladeiras", "Metano da pecuária"],
      "r": "CFCs de aerossóis e geladeiras",
-     "exp": "Os clorofluorcarbonetos (CFCs) liberam cloro na estratosfera, destruindo o ozônio. O Protocolo de Montreal (1987) baniu essas substâncias e a camada está se recuperando."},
+     "exp": "Os clorofluorcarbonetos (CFCs) liberam cloro na estratosfera, destruindo o ozônio. O Protocolo de Montreal baniu essas substâncias e a camada está se recuperando."},
     {"q": "Qual metal é mais comum em baterias de celular?",
      "a": ["Ouro", "Cobre", "Lítio"], "r": "Lítio",
      "exp": "O lítio é leve e tem alta capacidade energética. Por isso é muito extraído, causando impactos em regiões como o Triângulo do Lítio na América do Sul."},
@@ -345,7 +382,7 @@ PERGUNTAS = [
      "exp": "Pela norma ABNT: Amarelo = Metal, Azul = Papel, Verde = Vidro, Vermelho = Plástico, Marrom = Orgânico."},
     {"q": "Reciclar alumínio economiza principalmente qual recurso?",
      "a": ["Água", "Energia elétrica", "Madeira"], "r": "Energia elétrica",
-     "exp": "Reciclar alumínio gasta até 95% menos energia do que produzir alumínio do minério bauxita — um dos metais mais eficientes de reciclar."},
+     "exp": "Reciclar alumínio gasta até 95% menos energia do que produzir alumínio do minério bauxita."},
 ]
 
 def perguntas_do_dia():
@@ -358,7 +395,7 @@ DICAS = [
     "🛍️ Uma sacola retornável substitui ~600 sacolas plásticas ao longo da vida.",
     "🥦 Reduzir carne bovina 1× por semana equivale a não usar o carro por 5 semanas.",
     "💡 Lâmpadas LED consomem até 80% menos energia que as incandescentes.",
-    "🔌 Desligar da tomada (não no standby) pode reduzir a conta de luz em até 12%.",
+    "🔌 Desligar da tomada pode reduzir a conta de luz em até 12%.",
     "🌳 Árvores próximas a uma casa podem reduzir o uso de ar-condicionado em até 30%.",
     "📱 Um celular descartado errado pode contaminar até 60 mil litros de água.",
     "🧺 Lavar roupas com água fria economiza até 90% da energia da máquina de lavar.",
@@ -372,11 +409,11 @@ def dica_do_dia():
 # ─── CONQUISTAS ───────────────────────────────────────────────────────────────
 CONQUISTAS_DEF = [
     {"icon": "🌱", "nome": "Primeira missão",  "cond": lambda d: d.get("pontos_totais", 0) >= 1,         "desc": "Registre qualquer atividade pela primeira vez."},
-    {"icon": "🧠", "nome": "Quiz mestre",       "cond": lambda d: d.get("total_quizzes_certos", 0) >= 10, "desc": "Acerte 10 perguntas do quiz no total."},
-    {"icon": "🚲", "nome": "Ciclista urbano",   "cond": lambda d: d.get("total_trajetos", 0) >= 5,        "desc": "Registre 5 trajetos de bike ou caminhada."},
-    {"icon": "🔥", "nome": "Sequência 3 dias",  "cond": lambda d: d.get("streak_dias", 0) >= 3,           "desc": "Jogue 3 dias consecutivos."},
-    {"icon": "🌳", "nome": "EcoÁrvore",         "cond": lambda d: d.get("pontos_totais", 0) >= 400,       "desc": "Alcance 400 XP."},
-    {"icon": "👑", "nome": "EcoLíder",          "cond": lambda d: d.get("pontos_totais", 0) >= 800,       "desc": "Alcance 800 XP e lidere o movimento."},
+    {"icon": "🧠", "nome": "Quiz mestre",      "cond": lambda d: d.get("total_quizzes_certos", 0) >= 10, "desc": "Acerte 10 perguntas do quiz no total."},
+    {"icon": "🚲", "nome": "Ciclista urbano",  "cond": lambda d: d.get("total_trajetos", 0) >= 5,        "desc": "Registre 5 trajetos de bike ou caminhada."},
+    {"icon": "🔥", "nome": "Sequência 3 dias", "cond": lambda d: d.get("streak_dias", 0) >= 3,           "desc": "Jogue 3 dias consecutivos."},
+    {"icon": "🌳", "nome": "EcoÁrvore",        "cond": lambda d: d.get("pontos_totais", 0) >= 400,       "desc": "Alcance 400 XP."},
+    {"icon": "👑", "nome": "EcoLíder",         "cond": lambda d: d.get("pontos_totais", 0) >= 800,       "desc": "Alcance 800 XP e lidere o movimento."},
 ]
 
 # ─── ESTADO ───────────────────────────────────────────────────────────────────
@@ -388,6 +425,9 @@ if "quiz_feedback" not in st.session_state:
 
 if "quiz_respondido" not in st.session_state:
     st.session_state.quiz_respondido = False
+
+if "user_data" not in st.session_state:
+    st.session_state.user_data = dados_iniciais()
 
 # ─── CABEÇALHO ────────────────────────────────────────────────────────────────
 st.markdown("""
@@ -447,21 +487,25 @@ if not st.session_state.logged_in:
                     st.session_state.logged_in = True
                     st.session_state.username = u
 
-                    dados = res.data[0]["dados_json"]
-                    dados.setdefault("pontos_totais", 0)
-                    dados.setdefault("tentativas_quiz", 0)
-                    dados.setdefault("data_quiz", "")
-                    dados.setdefault("idx_perguntas_hoje", [])
-                    dados.setdefault("total_quizzes_certos", 0)
-                    dados.setdefault("total_trajetos", 0)
-                    dados.setdefault("streak_dias", 0)
-                    dados.setdefault("ultima_atividade", "")
+                    dados = res.data[0].get("dados_json") or {}
+                    dados = normalizar_dados(dados)
 
                     st.session_state.user_data = dados
                     st.session_state.quiz_feedback = None
                     st.session_state.quiz_respondido = False
+
+                    registrar_acesso("login_sucesso", {"username": u})
                     st.rerun()
                 else:
+                    try:
+                        supabase.table("acessos").insert({
+                            "username": u,
+                            "evento": "login_falha",
+                            "detalhes": {},
+                            "criado_em": datetime.utcnow().isoformat()
+                        }).execute()
+                    except Exception:
+                        pass
                     st.error("Usuário ou senha inválidos.")
 
             except Exception as e:
@@ -477,19 +521,19 @@ if not st.session_state.logged_in:
                     novo_usuario = {
                         "username": u,
                         "password": p,
-                        "dados_json": {
-                            "pontos_totais": 0,
-                            "tentativas_quiz": 0,
-                            "data_quiz": "",
-                            "idx_perguntas_hoje": [],
-                            "total_quizzes_certos": 0,
-                            "total_trajetos": 0,
-                            "streak_dias": 0,
-                            "ultima_atividade": ""
-                        }
+                        "dados_json": dados_iniciais()
                     }
 
                     supabase.table("usuarios").insert(novo_usuario).execute()
+                    try:
+                        supabase.table("acessos").insert({
+                            "username": u,
+                            "evento": "cadastro",
+                            "detalhes": {},
+                            "criado_em": datetime.utcnow().isoformat()
+                        }).execute()
+                    except Exception:
+                        pass
                     st.success("Usuário cadastrado com sucesso!")
 
             except Exception as e:
@@ -499,9 +543,11 @@ if not st.session_state.logged_in:
 
 # ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 else:
-    dados = st.session_state.user_data
-    pts   = dados.get("pontos_totais", 0)
-    pat   = obter_patente(pts)
+    dados = normalizar_dados(st.session_state.user_data)
+    st.session_state.user_data = dados
+
+    pts = dados.get("pontos_totais", 0)
+    pat = obter_patente(pts)
     pct, faltando, prox = barra_xp(pts)
     hoje_str = str(date.today())
 
@@ -521,7 +567,9 @@ else:
                 delta = (hoje_d - date.fromisoformat(ultima)).days
                 if delta == 1:
                     dados["streak_dias"] = dados.get("streak_dias", 0) + 1
-                elif delta > 1:
+                elif delta == 0:
+                    dados["streak_dias"] = max(1, dados.get("streak_dias", 0))
+                else:
                     dados["streak_dias"] = 1
             except Exception:
                 dados["streak_dias"] = 1
@@ -563,15 +611,17 @@ else:
         st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
         menu = st.radio("Nav", ["📊 Painel", "🏆 Ranking", "🗺️ Eco-Radar", "🏅 Conquistas"], label_visibility="collapsed")
         st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
+
         if st.button("Sair"):
+            registrar_acesso("logout", {})
             st.session_state.logged_in = False
             st.session_state.quiz_feedback = None
             st.session_state.quiz_respondido = False
+            st.session_state.user_data = dados_iniciais()
             st.rerun()
 
     # ── PAINEL ───────────────────────────────────────────────────────────────
     if menu == "📊 Painel":
-
         st.markdown(f"""
         <div class="dica-card">
             <span class="dica-label">💡 Dica do dia</span>
@@ -596,6 +646,7 @@ else:
                 por passageiro do que o carro particular.
                 </p>
                 """, unsafe_allow_html=True)
+
                 tempo = st.number_input("Duração (minutos):", 5, 120, 20, key="tempo_t")
                 tipo = st.selectbox("Modalidade:", ["🚴 Bike / Caminhada", "🚌 Ônibus / Metrô"], key="tipo_t")
                 distancia = st.number_input("Distância estimada (km):", 0.5, 100.0, 5.0, step=0.5, key="dist_t")
@@ -619,6 +670,13 @@ else:
                     dados["total_trajetos"] = dados.get("total_trajetos", 0) + 1
                     atualizar_streak()
                     salvar_dados(dados)
+                    registrar_acesso("trajeto_registrado", {
+                        "tempo": tempo,
+                        "tipo": tipo,
+                        "distancia": distancia,
+                        "co2_salvo": co2_salvo,
+                        "xp_ganho": xp_ganho
+                    })
                     st.success(f"Trajeto registrado! +{xp_ganho} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
                     st.rerun()
 
@@ -669,10 +727,19 @@ else:
                             st.session_state.quiz_feedback = {
                                 "tipo": tipo_msg,
                                 "mensagem": mensagem,
-                                "exp": item["exp"]
+                                "exp": item["exp"],
+                                "resposta_usuario": resp,
+                                "resposta_certa": item["r"],
+                                "pergunta": item["q"]
                             }
                             st.session_state.quiz_respondido = True
                             salvar_dados(dados)
+                            registrar_acesso("quiz_respondido", {
+                                "pergunta": item["q"],
+                                "resposta_usuario": resp,
+                                "resposta_certa": item["r"],
+                                "acertou": acertou
+                            })
                             st.rerun()
 
                     else:
@@ -705,7 +772,7 @@ else:
         try:
             res = supabase.table("usuarios").select("username, dados_json").execute()
             jogadores = sorted(
-                [{"nome": u["username"], "xp": u["dados_json"].get("pontos_totais", 0)} for u in res.data],
+                [{"nome": u["username"], "xp": normalizar_dados(u["dados_json"]).get("pontos_totais", 0)} for u in res.data],
                 key=lambda x: x["xp"], reverse=True
             )
             medals = ["🥇", "🥈", "🥉"]
@@ -746,16 +813,11 @@ else:
         st.markdown("<p style='font-size:13px; color:var(--muted); margin-bottom:20px;'>Encontre pontos de descarte consciente próximos a você.</p>", unsafe_allow_html=True)
 
         ECOPONTOS = [
-            {"nome": "Ecoponto Lapa",          "lat": -23.525, "lon": -46.700, "icon": "♻️",
-             "tags": ["Metal","Vidro","Eletrônicos"],       "horario": "Seg–Sáb 8h–17h"},
-            {"nome": "Ecoponto Pinheiros",      "lat": -23.566, "lon": -46.683, "icon": "🌿",
-             "tags": ["Orgânico","Papel","Plástico"],       "horario": "Seg–Sex 7h–19h"},
-            {"nome": "Cooperativa Verde Vida",  "lat": -23.551, "lon": -46.634, "icon": "🤝",
-             "tags": ["Reciclagem geral"],                  "horario": "Seg–Sex 8h–16h"},
-            {"nome": "Ecoponto Mooca",          "lat": -23.547, "lon": -46.606, "icon": "🏗️",
-             "tags": ["Entulho","Eletrônicos","Móveis"],    "horario": "Ter–Dom 8h–17h"},
-            {"nome": "Coleta PMSP – Santana",   "lat": -23.493, "lon": -46.628, "icon": "🔋",
-             "tags": ["Pilhas","Baterias","Remédios"],      "horario": "Seg–Sex 9h–17h"},
+            {"nome": "Ecoponto Lapa",         "lat": -23.525, "lon": -46.700, "icon": "♻️", "tags": ["Metal","Vidro","Eletrônicos"],    "horario": "Seg–Sáb 8h–17h"},
+            {"nome": "Ecoponto Pinheiros",   "lat": -23.566, "lon": -46.683, "icon": "🌿", "tags": ["Orgânico","Papel","Plástico"],    "horario": "Seg–Sex 7h–19h"},
+            {"nome": "Cooperativa Verde Vida","lat": -23.551, "lon": -46.634, "icon": "🤝", "tags": ["Reciclagem geral"],              "horario": "Seg–Sex 8h–16h"},
+            {"nome": "Ecoponto Mooca",       "lat": -23.547, "lon": -46.606, "icon": "🏗️", "tags": ["Entulho","Eletrônicos","Móveis"], "horario": "Ter–Dom 8h–17h"},
+            {"nome": "Coleta PMSP – Santana","lat": -23.493, "lon": -46.628, "icon": "🔋", "tags": ["Pilhas","Baterias","Remédios"],   "horario": "Seg–Sex 9h–17h"},
         ]
 
         CATEGORIAS = [
