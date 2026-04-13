@@ -176,20 +176,13 @@ div[role="option"]:hover {
 .logo-pixel {
     font-family: 'Press Start 2P', monospace !important;
     font-size: clamp(22px, 6vw, 52px) !important;
-    background: linear-gradient(90deg, #7C3AED, #EC4899, #22C55E, #7C3AED);
-    background-size: 200% auto;
+    background: linear-gradient(90deg, #7C3AED 0%, #EC4899 50%, #22C55E 100%);
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     display: inline-block;
+    filter: drop-shadow(0 0 20px rgba(236,72,153,0.4));
     letter-spacing: 6px;
-    animation: brilho 4s linear infinite;
-}
-
-@keyframes brilho {
-    0%   { background-position: 0% center;   filter: drop-shadow(0 0 10px rgba(124,58,237,0.6)); }
-    50%  { background-position: 100% center; filter: drop-shadow(0 0 25px rgba(236,72,153,0.9)); }
-    100% { background-position: 200% center; filter: drop-shadow(0 0 10px rgba(34,197,94,0.6));  }
 }
 .logo-sub {
     font-size: 11px !important; color: var(--muted) !important;
@@ -565,68 +558,94 @@ if not st.session_state.logged_in:
             unsafe_allow_html=True
         )
 
-        u = st.text_input("Usuário", placeholder="seu_usuario")
-        p = st.text_input("Senha", type="password", placeholder="••••••••")
+        aba_login, aba_cadastro = st.tabs(["▶ Entrar", "📝 Criar Conta"])
 
-        if st.button("▶ INICIAR MISSÃO"):
-            try:
-                res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
+        with aba_login:
+            u_login = st.text_input("Usuário", placeholder="seu_usuario", key="login_user")
+            p_login = st.text_input("Senha", type="password", placeholder="••••••••", key="login_pass")
 
-                if res.data:
-                    st.session_state.logged_in = True
-                    st.session_state.username = u
-
-                    dados = res.data[0].get("dados_json") or {}
-                    dados = normalizar_dados(dados)
-
-                    st.session_state.user_data = dados
-                    st.session_state.quiz_feedback = None
-                    st.session_state.quiz_respondido = False
-
-                    registrar_acesso("Login realizado")
-                    st.rerun()
+            if st.button("▶ INICIAR MISSÃO", use_container_width=True):
+                if not u_login.strip():
+                    st.warning("⚠️ Preencha o campo **Usuário**.")
+                elif not p_login.strip():
+                    st.warning("⚠️ Preencha o campo **Senha**.")
                 else:
                     try:
-                        supabase.table("acessos").insert({
-                            "username": u,
-                            "evento": "login_falha",
-                            "detalhes": {},
-                            "criado_em": datetime.utcnow().isoformat()
-                        }).execute()
-                    except Exception:
-                        pass
-                    st.error("Usuário ou senha inválidos.")
+                        res = supabase.table("usuarios").select("*").eq("username", u_login.strip()).eq("password", p_login).execute()
 
-            except Exception as e:
-                st.error(f"Erro de conexão: {e}")
+                        if res.data:
+                            st.session_state.logged_in = True
+                            st.session_state.username = u_login.strip()
 
-        if st.button("📝 CADASTRAR NOVO USUÁRIO"):
-            try:
-                existente = supabase.table("usuarios").select("*").eq("username", u).execute()
+                            dados = res.data[0].get("dados_json") or {}
+                            dados = normalizar_dados(dados)
 
-                if existente.data:
-                    st.warning("Usuário já existe.")
+                            st.session_state.user_data = dados
+                            st.session_state.quiz_feedback = None
+                            st.session_state.quiz_respondido = False
+
+                            registrar_acesso("Login realizado")
+                            st.rerun()
+                        else:
+                            try:
+                                supabase.table("acessos").insert({
+                                    "username": u_login.strip(),
+                                    "evento": "login_falha",
+                                    "detalhes": {},
+                                    "criado_em": datetime.utcnow().isoformat()
+                                }).execute()
+                            except Exception:
+                                pass
+                            st.error("❌ Usuário ou senha inválidos. Verifique seus dados e tente novamente.")
+
+                    except Exception as e:
+                        st.error(f"Erro de conexão: {e}")
+
+        with aba_cadastro:
+            u_cad = st.text_input("Usuário", placeholder="escolha_seu_usuario", key="cad_user")
+            p_cad = st.text_input("Senha", type="password", placeholder="••••••••", key="cad_pass")
+            p_cad2 = st.text_input("Confirmar Senha", type="password", placeholder="••••••••", key="cad_pass2")
+
+            if st.button("📝 CRIAR CONTA", use_container_width=True):
+                if not u_cad.strip():
+                    st.warning("⚠️ Preencha o campo **Usuário**.")
+                elif not p_cad.strip():
+                    st.warning("⚠️ Preencha o campo **Senha**.")
+                elif not p_cad2.strip():
+                    st.warning("⚠️ Confirme sua **Senha**.")
+                elif p_cad != p_cad2:
+                    st.error("❌ As senhas não coincidem.")
+                elif len(u_cad.strip()) < 3:
+                    st.warning("⚠️ O usuário deve ter pelo menos 3 caracteres.")
+                elif len(p_cad) < 4:
+                    st.warning("⚠️ A senha deve ter pelo menos 4 caracteres.")
                 else:
-                    novo_usuario = {
-                        "username": u,
-                        "password": p,
-                        "dados_json": dados_iniciais()
-                    }
-
-                    supabase.table("usuarios").insert(novo_usuario).execute()
                     try:
-                        supabase.table("acessos").insert({
-                            "username": u,
-                            "evento": "cadastro",
-                            "detalhes": {},
-                            "criado_em": datetime.utcnow().isoformat()
-                        }).execute()
-                    except Exception:
-                        pass
-                    st.success("Usuário cadastrado com sucesso!")
+                        existente = supabase.table("usuarios").select("*").eq("username", u_cad.strip()).execute()
 
-            except Exception as e:
-                st.error(f"Erro ao cadastrar: {e}")
+                        if existente.data:
+                            st.warning("⚠️ Esse nome de usuário já está em uso. Escolha outro.")
+                        else:
+                            novo_usuario = {
+                                "username": u_cad.strip(),
+                                "password": p_cad,
+                                "dados_json": dados_iniciais()
+                            }
+
+                            supabase.table("usuarios").insert(novo_usuario).execute()
+                            try:
+                                supabase.table("acessos").insert({
+                                    "username": u_cad.strip(),
+                                    "evento": "cadastro",
+                                    "detalhes": {},
+                                    "criado_em": datetime.utcnow().isoformat()
+                                }).execute()
+                            except Exception:
+                                pass
+                            st.success("✅ Conta criada com sucesso! Vá para a aba **Entrar** e faça login.")
+
+                    except Exception as e:
+                        st.error(f"Erro ao cadastrar: {e}")
 
         st.markdown("</div>", unsafe_allow_html=True)
 
@@ -742,26 +761,31 @@ else:
 
                 if "Bike" in tipo:
                     co2_salvo = round(distancia * 0.21, 2)
-                    xp_ganho = int(tempo * 0.8)
+                    xp_ganho = min(int(tempo * 0.8), 100)
                 else:
                     co2_salvo = round(distancia * 0.089, 2)
-                    xp_ganho = int(tempo * 0.4)
+                    xp_ganho = min(int(tempo * 0.4), 100)
 
+                aviso_cap_preview = " <span style='font-size:11px; color:#FBBF24;'>(máx. por registro)</span>" if xp_ganho == 100 else ""
                 st.markdown(f"""
                 <div class="info-box">
-                    Esta missão vai gerar <b>+{xp_ganho} XP</b> e economizar <b>{co2_salvo} kg de CO₂</b>
+                    Esta missão vai gerar <b>+{xp_ganho} XP</b>{aviso_cap_preview} e economizar <b>{co2_salvo} kg de CO₂</b>
                     — equivalente a {co2_salvo / 0.022:.0f} h de absorção de uma árvore adulta.
                 </div>
                 """, unsafe_allow_html=True)
 
         if st.button("✅ Confirmar trajeto"):
-                    dados["pontos_totais"] += int(tempo * 0.5)
+                    XP_LIMITE = 100
+                    xp_bruto = int(tempo * 0.5)
+                    xp_real = min(xp_bruto, XP_LIMITE)
+                    dados["pontos_totais"] += xp_real
                     dados["total_trajetos"] += 1
                     salvar_dados(dados)
 
                     registrar_acesso(f"Transporte: {tipo} | {distancia} km | {co2_salvo} kg CO₂")
-                    
-                    st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
+
+                    aviso_cap = f" (limite de {XP_LIMITE} XP por registro atingido)" if xp_bruto > XP_LIMITE else ""
+                    st.success(f"Trajeto registrado! +{xp_real} XP{aviso_cap} | {co2_salvo} kg de CO₂ não emitidos 🌱")
                     st.rerun()
 
         with col_b:
@@ -805,9 +829,11 @@ else:
                             acertou = resp == item["r"]
 
                             if acertou:
-                                dados["pontos_totais"] += 20
+                                XP_LIMITE = 100
+                                xp_quiz = min(20, XP_LIMITE)
+                                dados["pontos_totais"] += xp_quiz
                                 dados["total_quizzes_certos"] = dados.get("total_quizzes_certos", 0) + 1
-                                mensagem = "✅ Correto! +20 XP"
+                                mensagem = f"✅ Correto! +{xp_quiz} XP"
                                 tipo_msg = "success"
                             else:
                                 mensagem = f"❌ A resposta certa era: {item['r']}"
