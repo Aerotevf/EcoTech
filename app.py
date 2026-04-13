@@ -752,7 +752,7 @@ else:
                     dados["total_trajetos"] += 1
                     salvar_dados(dados)
 
-                    registrar_acesso(f"Ação: Transporte ({tipo})") 
+                    registrar_acesso(f"Transporte: {tipo} | {distancia} km | {co2_salvo} kg CO₂")) 
                     
                     st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
                     st.rerun()
@@ -1014,7 +1014,15 @@ else:
 
                     acertos = sum(1 for q in quizzes if "Acertou" in q)
                     erros   = sum(1 for q in quizzes if "Errou" in q)
-                    co2     = round(len(transportes) * 1.05, 2)
+     co2 = 0.0
+                    for t in transportes:
+                        try:
+                            parte = [p for p in t.split("|") if "kg" in p]
+                            if parte:
+                                co2 += float(parte[0].replace("kg CO₂","").replace("kg","").strip())
+                        except:
+                            co2 += 1.05
+                    co2 = round(co2, 2)
 
                     # Cabeçalho do dia
                     st.markdown(f"""
