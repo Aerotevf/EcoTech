@@ -1014,7 +1014,7 @@ else:
 
                     acertos = sum(1 for q in quizzes if "Acertou" in q)
                     erros   = sum(1 for q in quizzes if "Errou" in q)
-     co2 = 0.0
+                    co2 = 0.0
                     for t in transportes:
                         try:
                             parte = [p for p in t.split("|") if "kg" in p]
