@@ -72,14 +72,47 @@ input,[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input {
     padding: 16px !important;
 }
 .stRadio > div { gap: 6px !important; }
+
 .stSelectbox > div > div {
     background: rgba(255,255,255,0.06) !important;
-    border-color: var(--border) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
 }
+
+[data-baseweb="select"] > div {
+    background: rgba(255,255,255,0.06) !important;
+    border: 1px solid var(--border) !important;
+    color: var(--text) !important;
+}
+
+[data-baseweb="select"] span,
+[data-baseweb="select"] div {
+    color: var(--text) !important;
+}
+
+[data-baseweb="select"] input {
+    color: #E2E8F0 !important;
+    -webkit-text-fill-color: #E2E8F0 !important;
+}
+
+div[role="listbox"] {
+    background: #191927 !important;
+    border: 1px solid var(--border) !important;
+}
+
+div[role="option"] {
+    background: #191927 !important;
+    color: #E2E8F0 !important;
+}
+
+div[role="option"]:hover {
+    background: rgba(124,58,237,0.25) !important;
+    color: #FFFFFF !important;
+}
+
 ::-webkit-scrollbar { width: 4px; }
 ::-webkit-scrollbar-thumb { background: var(--roxo); border-radius: 4px; }
 
-/* ── Componentes ── */
 .logo-wrap { text-align:center; padding:40px 0 20px; }
 .logo-pixel {
     font-family: 'Press Start 2P', monospace !important;
@@ -350,6 +383,12 @@ CONQUISTAS_DEF = [
 if "logged_in" not in st.session_state:
     st.session_state.logged_in = False
 
+if "quiz_feedback" not in st.session_state:
+    st.session_state.quiz_feedback = None
+
+if "quiz_respondido" not in st.session_state:
+    st.session_state.quiz_respondido = False
+
 # ─── CABEÇALHO ────────────────────────────────────────────────────────────────
 st.markdown("""
 <div class="logo-wrap">
@@ -388,7 +427,7 @@ if not st.session_state.logged_in:
                     <div class="xp-req">{pat['min']}+ XP</div>
                 </div>
                 """, unsafe_allow_html=True)
-                
+
     with col2:
         st.markdown('<div class="eco-card">', unsafe_allow_html=True)
 
@@ -400,7 +439,6 @@ if not st.session_state.logged_in:
         u = st.text_input("Usuário", placeholder="seu_usuario")
         p = st.text_input("Senha", type="password", placeholder="••••••••")
 
-        # 🔐 LOGIN
         if st.button("▶ INICIAR MISSÃO"):
             try:
                 res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
@@ -420,6 +458,8 @@ if not st.session_state.logged_in:
                     dados.setdefault("ultima_atividade", "")
 
                     st.session_state.user_data = dados
+                    st.session_state.quiz_feedback = None
+                    st.session_state.quiz_respondido = False
                     st.rerun()
                 else:
                     st.error("Usuário ou senha inválidos.")
@@ -427,7 +467,6 @@ if not st.session_state.logged_in:
             except Exception as e:
                 st.error(f"Erro de conexão: {e}")
 
-        # 📝 CADASTRO
         if st.button("📝 CADASTRAR NOVO USUÁRIO"):
             try:
                 existente = supabase.table("usuarios").select("*").eq("username", u).execute()
@@ -457,7 +496,7 @@ if not st.session_state.logged_in:
                 st.error(f"Erro ao cadastrar: {e}")
 
         st.markdown("</div>", unsafe_allow_html=True)
-    
+
 # ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 else:
     dados = st.session_state.user_data
@@ -466,12 +505,13 @@ else:
     pct, faltando, prox = barra_xp(pts)
     hoje_str = str(date.today())
 
-    # Reset diário do quiz
     if dados.get("data_quiz") != hoje_str:
-        dados["data_quiz"]           = hoje_str
-        dados["tentativas_quiz"]     = 0
-        dados["idx_perguntas_hoje"]  = perguntas_do_dia()
+        dados["data_quiz"] = hoje_str
+        dados["tentativas_quiz"] = 0
+        dados["idx_perguntas_hoje"] = perguntas_do_dia()
         salvar_dados(dados)
+        st.session_state.quiz_feedback = None
+        st.session_state.quiz_respondido = False
 
     def atualizar_streak():
         ultima = dados.get("ultima_atividade", "")
@@ -525,6 +565,8 @@ else:
         st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
         if st.button("Sair"):
             st.session_state.logged_in = False
+            st.session_state.quiz_feedback = None
+            st.session_state.quiz_respondido = False
             st.rerun()
 
     # ── PAINEL ───────────────────────────────────────────────────────────────
@@ -538,15 +580,14 @@ else:
         """, unsafe_allow_html=True)
 
         c1, c2, c3, c4 = st.columns(4)
-        c1.metric("⚡ XP Total",          f"{pts} pts")
-        c2.metric("🌿 CO₂ Economizado",   f"{pts * 0.1:.1f} kg")
-        c3.metric("🚲 Trajetos",           dados.get("total_trajetos", 0))
-        c4.metric("📝 Quiz hoje",          f"{dados.get('tentativas_quiz',0)}/5")
+        c1.metric("⚡ XP Total", f"{pts} pts")
+        c2.metric("🌿 CO₂ Economizado", f"{pts * 0.1:.1f} kg")
+        c3.metric("🚲 Trajetos", dados.get("total_trajetos", 0))
+        c4.metric("📝 Quiz hoje", f"{dados.get('tentativas_quiz', 0)}/5")
 
         st.markdown('<div class="sep"></div>', unsafe_allow_html=True)
         col_a, col_b = st.columns(2, gap="large")
 
-        # TRANSPORTE
         with col_a:
             with st.expander("🚲 Registrar transporte sustentável", expanded=True):
                 st.markdown("""
@@ -555,16 +596,16 @@ else:
                 por passageiro do que o carro particular.
                 </p>
                 """, unsafe_allow_html=True)
-                tempo     = st.number_input("Duração (minutos):", 5, 120, 20, key="tempo_t")
-                tipo      = st.selectbox("Modalidade:", ["🚴 Bike / Caminhada", "🚌 Ônibus / Metrô"], key="tipo_t")
+                tempo = st.number_input("Duração (minutos):", 5, 120, 20, key="tempo_t")
+                tipo = st.selectbox("Modalidade:", ["🚴 Bike / Caminhada", "🚌 Ônibus / Metrô"], key="tipo_t")
                 distancia = st.number_input("Distância estimada (km):", 0.5, 100.0, 5.0, step=0.5, key="dist_t")
 
                 if "Bike" in tipo:
                     co2_salvo = round(distancia * 0.21, 2)
-                    xp_ganho  = int(tempo * 0.8)
+                    xp_ganho = int(tempo * 0.8)
                 else:
                     co2_salvo = round(distancia * 0.089, 2)
-                    xp_ganho  = int(tempo * 0.4)
+                    xp_ganho = int(tempo * 0.4)
 
                 st.markdown(f"""
                 <div class="info-box">
@@ -574,18 +615,17 @@ else:
                 """, unsafe_allow_html=True)
 
                 if st.button("✅ Confirmar trajeto"):
-                    dados["pontos_totais"]  += xp_ganho
-                    dados["total_trajetos"]  = dados.get("total_trajetos", 0) + 1
+                    dados["pontos_totais"] += xp_ganho
+                    dados["total_trajetos"] = dados.get("total_trajetos", 0) + 1
                     atualizar_streak()
                     salvar_dados(dados)
                     st.success(f"Trajeto registrado! +{xp_ganho} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
                     st.rerun()
 
-        # QUIZ
         with col_b:
             with st.expander("🧠 Quiz Sustentável", expanded=True):
                 tentativas = dados.get("tentativas_quiz", 0)
-                idx_hoje   = dados.get("idx_perguntas_hoje", [])
+                idx_hoje = dados.get("idx_perguntas_hoje", [])
 
                 if tentativas >= 5:
                     st.markdown("""
@@ -595,34 +635,67 @@ else:
                         <p style="font-size:12px; color:var(--muted);">Volte amanhã para novas perguntas.</p>
                     </div>
                     """, unsafe_allow_html=True)
+
                 elif not idx_hoje:
                     st.info("Carregando perguntas...")
+
                 else:
                     idx_q = idx_hoje[tentativas % len(idx_hoje)]
-                    item  = PERGUNTAS[idx_q]
+                    item = PERGUNTAS[idx_q]
+
                     st.markdown(f"""
                     <p style="font-size:10px; color:var(--muted); letter-spacing:2px; text-transform:uppercase; margin-bottom:8px;">
                         Pergunta {tentativas+1} de 5
                     </p>
                     <p style="font-size:15px; font-weight:600; margin-bottom:14px; line-height:1.5;">{item['q']}</p>
                     """, unsafe_allow_html=True)
-                    resp = st.radio("Escolha:", item["a"], key=f"quiz_{tentativas}", label_visibility="collapsed")
-                    if st.button("📤 Enviar resposta"):
-                        dados["tentativas_quiz"] += 1
-                        atualizar_streak()
-                        if resp == item["r"]:
-                            dados["pontos_totais"]        += 20
-                            dados["total_quizzes_certos"]  = dados.get("total_quizzes_certos", 0) + 1
-                            st.success("✅ Correto! +20 XP")
-                        else:
-                            st.error(f"❌ A resposta certa era: **{item['r']}**")
-                        st.markdown(f"""
-                        <div class="info-box" style="margin-top:8px;">
-                            💡 <b>Saiba mais:</b> {item['exp']}
-                        </div>
-                        """, unsafe_allow_html=True)
-                        salvar_dados(dados)
-                        st.rerun()
+
+                    if not st.session_state.quiz_respondido:
+                        resp = st.radio("Escolha:", item["a"], key=f"quiz_{tentativas}", label_visibility="collapsed")
+
+                        if st.button("📤 Enviar resposta"):
+                            atualizar_streak()
+                            acertou = resp == item["r"]
+
+                            if acertou:
+                                dados["pontos_totais"] += 20
+                                dados["total_quizzes_certos"] = dados.get("total_quizzes_certos", 0) + 1
+                                mensagem = "✅ Correto! +20 XP"
+                                tipo_msg = "success"
+                            else:
+                                mensagem = f"❌ A resposta certa era: {item['r']}"
+                                tipo_msg = "error"
+
+                            st.session_state.quiz_feedback = {
+                                "tipo": tipo_msg,
+                                "mensagem": mensagem,
+                                "exp": item["exp"]
+                            }
+                            st.session_state.quiz_respondido = True
+                            salvar_dados(dados)
+                            st.rerun()
+
+                    else:
+                        feedback = st.session_state.quiz_feedback
+
+                        if feedback:
+                            if feedback["tipo"] == "success":
+                                st.success(feedback["mensagem"])
+                            else:
+                                st.error(feedback["mensagem"])
+
+                            st.markdown(f"""
+                            <div class="info-box" style="margin-top:8px;">
+                                💡 <b>Saiba mais:</b> {feedback['exp']}
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                        if st.button("➡️ Próxima pergunta"):
+                            dados["tentativas_quiz"] += 1
+                            salvar_dados(dados)
+                            st.session_state.quiz_feedback = None
+                            st.session_state.quiz_respondido = False
+                            st.rerun()
 
     # ── RANKING ──────────────────────────────────────────────────────────────
     elif menu == "🏆 Ranking":
@@ -637,9 +710,9 @@ else:
             )
             medals = ["🥇", "🥈", "🥉"]
             for i, j in enumerate(jogadores):
-                pat_j      = obter_patente(j["xp"])
-                pos        = medals[i] if i < 3 else f"#{i+1}"
-                destaque   = "color: #FDE047 !important; font-weight:700;" if j["nome"] == st.session_state.username else ""
+                pat_j = obter_patente(j["xp"])
+                pos = medals[i] if i < 3 else f"#{i+1}"
+                destaque = "color: #FDE047 !important; font-weight:700;" if j["nome"] == st.session_state.username else ""
                 st.markdown(f"""
                 <div class="rank-row">
                     <span class="rank-pos">{pos}</span>
@@ -736,9 +809,9 @@ else:
         st.markdown("<h2 style='font-size:20px; margin-bottom:4px;'>🏅 Suas Conquistas</h2>", unsafe_allow_html=True)
         st.markdown("<p style='font-size:13px; color:var(--muted); margin-bottom:20px;'>Complete missões para desbloquear emblemas exclusivos.</p>", unsafe_allow_html=True)
 
-        conquistas    = [{"icon": c["icon"], "nome": c["nome"], "desc": c["desc"], "desbloqueada": c["cond"](dados)} for c in CONQUISTAS_DEF]
+        conquistas = [{"icon": c["icon"], "nome": c["nome"], "desc": c["desc"], "desbloqueada": c["cond"](dados)} for c in CONQUISTAS_DEF]
         desbloqueadas = sum(1 for c in conquistas if c["desbloqueada"])
-        pct_c         = int(desbloqueadas / len(conquistas) * 100)
+        pct_c = int(desbloqueadas / len(conquistas) * 100)
 
         st.markdown(f"""
         <div class="eco-card" style="margin-bottom:20px;">
@@ -751,7 +824,7 @@ else:
         cols_c = st.columns(3)
         for i, c in enumerate(conquistas):
             with cols_c[i % 3]:
-                opacidade  = "1" if c["desbloqueada"] else "0.35"
+                opacidade = "1" if c["desbloqueada"] else "0.35"
                 filtro_img = "grayscale(0)" if c["desbloqueada"] else "grayscale(1)"
                 st.markdown(f"""
                 <div class="conquista {'desbloqueada' if c['desbloqueada'] else ''}" style="opacity:{opacidade}">
