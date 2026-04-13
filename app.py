@@ -781,17 +781,17 @@ else:
                 </div>
                 """, unsafe_allow_html=True)
 
-      if st.button("✅ Confirmar trajeto"):
-            if distancia > 100:
-                st.error("A distância deve ser menor ou igual a 100 km!")
-            else:
-                dados["pontos_totais"] += int(tempo * 0.5)
-                dados["total_trajetos"] += 1
-                atualizar_streak()
-                salvar_dados(dados)
-                registrar_acesso(f"Transporte: {tipo} | {distancia} km | {co2_salvo} kg CO₂")
-                st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
-                st.rerun()
+                if st.button("✅ Confirmar trajeto"):
+                    if distancia > 100:
+                        st.error("A distância deve ser menor ou igual a 100 km!")
+                    else:
+                        dados["pontos_totais"] += int(tempo * 0.5)
+                        dados["total_trajetos"] += 1
+                        atualizar_streak()
+                        salvar_dados(dados)
+                        registrar_acesso(f"Transporte: {tipo} | {distancia} km | {co2_salvo} kg CO₂")
+                        st.success(f"Trajeto registrado! +{int(tempo * 0.5)} XP | {co2_salvo} kg de CO₂ não emitidos 🌱")
+                        st.rerun()
 
         with col_b:
             with st.expander("🧠 Quiz Sustentável", expanded=True):
