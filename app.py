@@ -176,13 +176,20 @@ div[role="option"]:hover {
 .logo-pixel {
     font-family: 'Press Start 2P', monospace !important;
     font-size: clamp(22px, 6vw, 52px) !important;
-    background: linear-gradient(90deg, #7C3AED 0%, #EC4899 50%, #22C55E 100%);
+    background: linear-gradient(90deg, #7C3AED, #EC4899, #22C55E, #7C3AED);
+    background-size: 200% auto;
     -webkit-background-clip: text;
     -webkit-text-fill-color: transparent;
     background-clip: text;
     display: inline-block;
-    filter: drop-shadow(0 0 20px rgba(236,72,153,0.4));
     letter-spacing: 6px;
+    animation: brilho 4s linear infinite;
+}
+
+@keyframes brilho {
+    0%   { background-position: 0% center;   filter: drop-shadow(0 0 10px rgba(124,58,237,0.6)); }
+    50%  { background-position: 100% center; filter: drop-shadow(0 0 25px rgba(236,72,153,0.9)); }
+    100% { background-position: 200% center; filter: drop-shadow(0 0 10px rgba(34,197,94,0.6));  }
 }
 .logo-sub {
     font-size: 11px !important; color: var(--muted) !important;
