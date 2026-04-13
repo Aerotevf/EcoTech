@@ -65,6 +65,38 @@ input,[data-testid="stTextInput"] input,[data-testid="stNumberInput"] input {
     border: 1px solid var(--border) !important;
     border-radius: 12px !important;
 }
+[data-testid="stExpander"] {
+    background: var(--card) !important;
+    border: 1px solid var(--border) !important;
+    border-radius: 12px !important;
+}
+
+[data-testid="stExpander"] summary {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    padding: 14px 16px !important;
+}
+
+[data-testid="stExpander"] summary span[data-testid="stExpanderToggleIcon"] {
+    flex-shrink: 0 !important;
+    order: 2 !important;
+    margin-left: auto !important;
+}
+
+[data-testid="stExpander"] summary p {
+    order: 1 !important;
+    margin: 0 !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: var(--text) !important;
+}
+
+[data-testid="stExpander"] summary svg {
+    position: static !important;
+    display: inline-block !important;
+}
+
 [data-testid="stMetric"] {
     background: var(--card) !important;
     border: 1px solid var(--border) !important;
