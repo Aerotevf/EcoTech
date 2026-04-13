@@ -359,6 +359,7 @@ st.markdown("""
 """, unsafe_allow_html=True)
 
 # ─── LOGIN ────────────────────────────────────────────────────────────────────
+# ─── LOGIN ────────────────────────────────────────────────────────────────────
 if not st.session_state.logged_in:
     col1, col2 = st.columns([1.5, 1], gap="large")
 
@@ -389,70 +390,75 @@ if not st.session_state.logged_in:
                 </div>
                 """, unsafe_allow_html=True)
 
+    # ✅ COLUNA DO LOGIN CORRIGIDA
     with col2:
-    st.markdown('<div class="eco-card">', unsafe_allow_html=True)
-    st.markdown("<p style='font-family:\"Press Start 2P\",monospace; font-size:9px; color:var(--muted); letter-spacing:2px; margin-bottom:16px;'>ACESSO AO TERMINAL</p>", unsafe_allow_html=True)
+        st.markdown('<div class="eco-card">', unsafe_allow_html=True)
 
-    u = st.text_input("Usuário", placeholder="seu_usuario")
-    p = st.text_input("Senha", type="password", placeholder="••••••••")
+        st.markdown(
+            "<p style='font-family:\"Press Start 2P\",monospace; font-size:9px; color:var(--muted); letter-spacing:2px; margin-bottom:16px;'>ACESSO AO TERMINAL</p>",
+            unsafe_allow_html=True
+        )
 
-    # 🔐 LOGIN
-    if st.button("▶ INICIAR MISSÃO"):
-        try:
-            res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
+        u = st.text_input("Usuário", placeholder="seu_usuario")
+        p = st.text_input("Senha", type="password", placeholder="••••••••")
 
-            if res.data:
-                st.session_state.logged_in = True
-                st.session_state.username = u
+        # 🔐 LOGIN
+        if st.button("▶ INICIAR MISSÃO"):
+            try:
+                res = supabase.table("usuarios").select("*").eq("username", u).eq("password", p).execute()
 
-                dados = res.data[0]["dados_json"]
-                dados.setdefault("pontos_totais", 0)
-                dados.setdefault("tentativas_quiz", 0)
-                dados.setdefault("data_quiz", "")
-                dados.setdefault("idx_perguntas_hoje", [])
-                dados.setdefault("total_quizzes_certos", 0)
-                dados.setdefault("total_trajetos", 0)
-                dados.setdefault("streak_dias", 0)
-                dados.setdefault("ultima_atividade", "")
+                if res.data:
+                    st.session_state.logged_in = True
+                    st.session_state.username = u
 
-                st.session_state.user_data = dados
-                st.rerun()
-            else:
-                st.error("Usuário ou senha inválidos.")
+                    dados = res.data[0]["dados_json"]
+                    dados.setdefault("pontos_totais", 0)
+                    dados.setdefault("tentativas_quiz", 0)
+                    dados.setdefault("data_quiz", "")
+                    dados.setdefault("idx_perguntas_hoje", [])
+                    dados.setdefault("total_quizzes_certos", 0)
+                    dados.setdefault("total_trajetos", 0)
+                    dados.setdefault("streak_dias", 0)
+                    dados.setdefault("ultima_atividade", "")
 
-        except Exception as e:
-            st.error(f"Erro de conexão: {e}")
+                    st.session_state.user_data = dados
+                    st.rerun()
+                else:
+                    st.error("Usuário ou senha inválidos.")
 
-    # 📝 CADASTRO
-    if st.button("📝 CADASTRAR NOVO USUÁRIO"):
-        try:
-            existente = supabase.table("usuarios").select("*").eq("username", u).execute()
+            except Exception as e:
+                st.error(f"Erro de conexão: {e}")
 
-            if existente.data:
-                st.warning("Usuário já existe.")
-            else:
-                novo_usuario = {
-                    "username": u,
-                    "password": p,
-                    "dados_json": {
-                        "pontos_totais": 0,
-                        "tentativas_quiz": 0,
-                        "data_quiz": "",
-                        "idx_perguntas_hoje": [],
-                        "total_quizzes_certos": 0,
-                        "total_trajetos": 0,
-                        "streak_dias": 0,
-                        "ultima_atividade": ""
+        # 📝 CADASTRO
+        if st.button("📝 CADASTRAR NOVO USUÁRIO"):
+            try:
+                existente = supabase.table("usuarios").select("*").eq("username", u).execute()
+
+                if existente.data:
+                    st.warning("Usuário já existe.")
+                else:
+                    novo_usuario = {
+                        "username": u,
+                        "password": p,
+                        "dados_json": {
+                            "pontos_totais": 0,
+                            "tentativas_quiz": 0,
+                            "data_quiz": "",
+                            "idx_perguntas_hoje": [],
+                            "total_quizzes_certos": 0,
+                            "total_trajetos": 0,
+                            "streak_dias": 0,
+                            "ultima_atividade": ""
+                        }
                     }
-                }
 
-                supabase.table("usuarios").insert(novo_usuario).execute()
-                st.success("Usuário cadastrado com sucesso!")
+                    supabase.table("usuarios").insert(novo_usuario).execute()
+                    st.success("Usuário cadastrado com sucesso!")
 
-        except Exception as e:
-            st.error(f"Erro ao cadastrar: {e}")
+            except Exception as e:
+                st.error(f"Erro ao cadastrar: {e}")
 
-    st.markdown("</div>", unsafe_allow_html=True)
+        st.markdown("</div>", unsafe_allow_html=True)
     
 # ─── APP PRINCIPAL ────────────────────────────────────────────────────────────
 else:
