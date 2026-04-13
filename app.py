@@ -417,10 +417,6 @@ if not st.session_state.logged_in:
                 st.error(f"Erro de conexão: {e}")
         st.markdown("</div>", unsafe_allow_html=True)
 
-if st.button("▶ INICIAR MISSÃO"):
-    # seu código de login (mantém igual)
-
-# 👇 ADICIONE ISSO AQUI (logo abaixo)
 if st.button("📝 CADASTRAR NOVO USUÁRIO"):
     try:
         existente = supabase.table("usuarios").select("*").eq("username", u).execute()
